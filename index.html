@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Article Note Saver - Dashboard</title>
+  <style>
+    :root { --bg:#0b0c10; --panel:#15171c; --muted:#9aa0a6; --text:#e8eaed; --accent:#4fc3f7; }
+    * { box-sizing: border-box; }
+    body { margin:0; font-family: system-ui, Segoe UI, Roboto, Arial; background:var(--bg); color:var(--text); }
+    .header { padding:16px; border-bottom:1px solid #222; }
+    .header h1 { margin:0 0 12px; font-size:20px; }
+    .controls { display:flex; gap:8px; align-items:center; margin-bottom:12px; }
+    .controls input { flex:1; padding:8px; border-radius:6px; border:1px solid #333; background:#0f1115; color:var(--text); }
+    .controls button { padding:8px 12px; border:0; border-radius:6px; background:var(--accent); color:#001018; font-weight:600; cursor:pointer; }
+    .tabs { display:flex; gap:8px; }
+    .tabs button { padding:6px 12px; border-radius:6px; background:#0f1115; color:var(--text); border:1px solid #333; cursor:pointer; }
+    .tabs button.active { background:var(--accent); color:#001018; border-color:transparent; }
+    main { padding:16px; }
+    .filters { display:flex; gap:8px; margin-bottom:12px; }
+    .filters input, .filters select { padding:8px; border-radius:6px; border:1px solid #333; background:#0f1115; color:var(--text); }
+    .filters button { padding:8px 12px; border:0; border-radius:6px; background:var(--accent); color:#001018; font-weight:600; cursor:pointer; }
+    .groups { display:grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap:12px; }
+    .group { background:var(--panel); border:1px solid #222; border-radius:10px; overflow:hidden; }
+    .group h3 { margin:0; padding:10px 12px; border-bottom:1px solid #222; font-size:14px; background:#0f1115; }
+    .item { padding:10px 12px; border-top:1px dashed #2a2d34; font-size:13px; }
+    .item:first-child { border-top:0; }
+    .item a { color:#88d1ff; text-decoration: none; }
+    .meta { color:var(--muted); font-size:12px; margin-top:4px; }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <h1>Article Note Saver - Dashboard</h1>
+    <div class="controls">
+      <label>Apps Script URL</label>
+      <input id="appsUrl" placeholder="https://script.google.com/macros/s/XXX/exec" />
+      <button id="loadBtn">Carica</button>
+    </div>
+    <div class="tabs">
+      <button id="tabNotes" class="active">Appunti</button>
+      <button id="tabData">Dati</button>
+    </div>
+  </header>
+
+  <main>
+    <section id="notesPanel">
+      <div class="filters">
+        <input id="notesSearch" placeholder="Cerca testo/titolo/DOI" />
+        <select id="notesTypeFilter">
+          <option value="">Tutti i type</option>
+        </select>
+        <button id="notesExportCsv" title="Esporta gli appunti filtrati in CSV">Esporta CSV</button>
+      </div>
+      <div id="notesGroups" class="groups"></div>
+    </section>
+
+    <section id="dataPanel" style="display:none;">
+      <div class="filters">
+        <input id="dataSearch" placeholder="Cerca per variabile/DOI" />
+        <select id="dataVarFilter">
+          <option value="">Tutte le variabili</option>
+        </select>
+        <button id="dataExportCsv" title="Esporta i dati filtrati in CSV">Esporta CSV</button>
+      </div>
+      <div id="dataGroups" class="groups"></div>
+    </section>
+  </main>
+
+  <script>
+    const DEFAULT_APPS_URL = "https://script.google.com/macros/s/AKfycbyRXsW2jhj_NarPEyX5T8Yqf8U05qrZtPWReMwC9oW4dHTqXegnZhUmCwuYVmMXZ1uX/exec";
+
+    const state = { appsUrl: '', notes: [], data: [] };
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const appsUrlEl = document.getElementById('appsUrl');
+      const loadBtn = document.getElementById('loadBtn');
+      const tabNotes = document.getElementById('tabNotes');
+      const tabData = document.getElementById('tabData');
+      const notesExportBtn = document.getElementById('notesExportCsv');
+      const dataExportBtn = document.getElementById('dataExportCsv');
+
+      appsUrlEl.value = localStorage.getItem('appsUrl') || DEFAULT_APPS_URL;
+      state.appsUrl = appsUrlEl.value;
+
+      loadBtn.onclick = async () => {
+        state.appsUrl = appsUrlEl.value.trim();
+        localStorage.setItem('appsUrl', state.appsUrl);
+        await loadAll();
+      };
+      tabNotes.onclick = () => switchTab('notes');
+      tabData.onclick = () => switchTab('data');
+
+      document.getElementById('notesSearch').oninput = renderNotes;
+      document.getElementById('notesTypeFilter').onchange = renderNotes;
+      document.getElementById('dataSearch').oninput = renderData;
+      document.getElementById('dataVarFilter').onchange = renderData;
+      notesExportBtn.onclick = exportNotesCsv;
+      dataExportBtn.onclick = exportDataCsv;
+
+      loadAll();
+    });
+
+    async function loadAll() {
+      try {
+        const url = new URL(state.appsUrl);
+        url.searchParams.set('mode', 'all');
+        const res = await fetch(url.toString());
+        const json = await res.json();
+        state.notes = Array.isArray(json.notes) ? json.notes : [];
+        state.data = Array.isArray(json.data) ? json.data : [];
+        populateFilters();
+        renderNotes();
+        renderData();
+      } catch (e) {
+        console.error('Errore caricamento dati:', e);
+        alert('Errore nel recupero dati. Verifica la URL di Apps Script.');
+      }
+    }
+
+    function switchTab(which) {
+      const nBtn = document.getElementById('tabNotes');
+      const dBtn = document.getElementById('tabData');
+      const nPanel = document.getElementById('notesPanel');
+      const dPanel = document.getElementById('dataPanel');
+      if (which === 'data') {
+        nBtn.classList.remove('active');
+        dBtn.classList.add('active');
+        nPanel.style.display = 'none';
+        dPanel.style.display = '';
+      } else {
+        dBtn.classList.remove('active');
+        nBtn.classList.add('active');
+        dPanel.style.display = 'none';
+        nPanel.style.display = '';
+      }
+    }
+
+    function populateFilters() {
+      const typeSet = new Set();
+      state.notes.forEach(n => { if (n.Type) typeSet.add(String(n.Type)); });
+      const typeSel = document.getElementById('notesTypeFilter');
+      typeSel.innerHTML = '<option value="">Tutti i type</option>' +
+        Array.from(typeSet).sort().map(t => `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join('');
+
+      const varSet = new Set();
+      state.data.forEach(d => { if (d.Variable) varSet.add(String(d.Variable)); });
+      const varSel = document.getElementById('dataVarFilter');
+      varSel.innerHTML = '<option value="">Tutte le variabili</option>' +
+        Array.from(varSet).sort().map(v => `<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join('');
+    }
+
+    function renderNotes() {
+      const filtered = getFilteredNotes();
+      const groups = groupBy(filtered, x => String(x.Type || 'Senza tipo'));
+      const container = document.getElementById('notesGroups');
+      container.innerHTML = '';
+      Object.keys(groups).sort().forEach(type => {
+        const box = document.createElement('div');
+        box.className = 'group';
+        box.innerHTML = `<h3>${escapeHtml(type)} <span class="meta">(${groups[type].length})</span></h3>`;
+        groups[type].forEach(item => {
+          const link = String(item.Link || item.URL || '');
+          const a = link ? `<a href="${escapeAttr(link)}" target="_blank">Apri</a>` : '';
+          const div = document.createElement('div');
+          div.className = 'item';
+          div.innerHTML = `
+            <div><b>${escapeHtml(String(item.Title||''))}</b></div>
+            <div class="meta">DOI: ${escapeHtml(String(item.DOI||''))}</div>
+            <div>${escapeHtml(String(item.Text||''))}</div>
+            <div class="meta">${a}</div>
+          `;
+          box.appendChild(div);
+        });
+        container.appendChild(box);
+      });
+    }
+
+    function renderData() {
+      const filtered = getFilteredData();
+      const groups = groupBy(filtered, x => String(x.Variable || 'Senza variabile'));
+      const container = document.getElementById('dataGroups');
+      container.innerHTML = '';
+      Object.keys(groups).sort().forEach(variable => {
+        const box = document.createElement('div');
+        box.className = 'group';
+        box.innerHTML = `<h3>${escapeHtml(variable)} <span class="meta">(${groups[variable].length})</span></h3>`;
+        groups[variable].forEach(item => {
+          const link = String(item.Link || item.URL || '');
+          const a = link ? `<a href="${escapeAttr(link)}" target="_blank">Apri</a>` : '';
+          const val = String(item.Value||'');
+          const unit = String(item.Unit||'');
+          const mean = String(item.Mean||'');
+          const std = String(item.StdDev||'');
+          const n = String(item.N||'');
+          const div = document.createElement('div');
+          div.className = 'item';
+          div.innerHTML = `
+            <div><b>${escapeHtml(val)} ${escapeHtml(unit)}</b> <span class="meta">N=${escapeHtml(n)} mean=${escapeHtml(mean)} sd=${escapeHtml(std)}</span></div>
+            <div class="meta">DOI: ${escapeHtml(String(item.DOI||''))}</div>
+            <div>${escapeHtml(String(item.Notes||''))}</div>
+            <div class="meta">${a}</div>
+          `;
+          box.appendChild(div);
+        });
+        container.appendChild(box);
+      });
+    }
+
+    function groupBy(arr, keyFn) {
+      return arr.reduce((acc, x) => {
+        const k = keyFn(x);
+        (acc[k] ||= []).push(x);
+        return acc;
+      }, {});
+    }
+
+    const NOTES_HEADERS = ['CreatedAt','URL','Link','Title','DOI','Text','Tags','Type','ClientTimestamp'];
+    const DATA_HEADERS = ['CreatedAt','DOI','URL','Link','Variable','Value','Unit','N','Mean','StdDev','Notes','ClientTimestamp'];
+
+    function getFilteredNotes() {
+      const search = document.getElementById('notesSearch').value.trim().toLowerCase();
+      const typeFilter = document.getElementById('notesTypeFilter').value;
+      return state.notes.filter(n => {
+        if (typeFilter && String(n.Type) !== typeFilter) return false;
+        if (!search) return true;
+        const hay = [n.Title, n.DOI, n.Text, n.URL, n.Link].map(x => String(x||'').toLowerCase()).join(' ');
+        return hay.includes(search);
+      });
+    }
+
+    function getFilteredData() {
+      const search = document.getElementById('dataSearch').value.trim().toLowerCase();
+      const varFilter = document.getElementById('dataVarFilter').value;
+      return state.data.filter(d => {
+        if (varFilter && String(d.Variable) !== varFilter) return false;
+        if (!search) return true;
+        const hay = [d.Variable, d.DOI, d.URL, d.Notes, d.Unit].map(x => String(x||'').toLowerCase()).join(' ');
+        return hay.includes(search);
+      });
+    }
+
+    function exportNotesCsv() {
+      const rows = getFilteredNotes();
+      const csv = toCsv(rows, NOTES_HEADERS);
+      downloadCsv(csv, `notes_${timestamp()}.csv`);
+    }
+    function exportDataCsv() {
+      const rows = getFilteredData();
+      const csv = toCsv(rows, DATA_HEADERS);
+      downloadCsv(csv, `data_${timestamp()}.csv`);
+    }
+
+    function toCsv(rows, headers) {
+      const esc = v => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
+      const lines = [headers.map(h => '"' + h + '"').join(',')];
+      for (const r of rows) {
+        lines.push(headers.map(h => esc(r[h])).join(','));
+      }
+      return lines.join('\r\n');
+    }
+
+    function downloadCsv(text, filename) {
+      const blob = new Blob([text], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    function timestamp() {
+      const d = new Date();
+      const pad = n => String(n).padStart(2, '0');
+      return `${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`;
+    }
+
+    function escapeHtml(str) {
+      return String(str).replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[s]));
+    }
+    function escapeAttr(str) {
+      return escapeHtml(str).replace(/"/g, '&quot;');
+    }
+  </script>
+</body>
+</html>
