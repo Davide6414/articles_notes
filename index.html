@@ -450,17 +450,16 @@
               : ``;
 
             card.innerHTML = `
+              <div class="title-row">
+                <span class="type">${escapeHtml(String(item.Type||'SENZA TIPO'))}</span>
+              </div>
               ${imgHtml}
               <div class="card-body">
-                <div class="title-row">
-                  <span class="type">${escapeHtml(String(item.Type||'SENZA TIPO'))}</span>
-                </div>
                 <div class="meta">DOI: ${escapeHtml(String(item.DOI||''))}</div>
                 ${noteText?`<div class=\"note-box\">${escapeHtml(noteText)}</div>`:''}
                 <div class="fulltext clamp-3 text-box">${escapeHtml(String(item.Text||''))}</div>
                 ${tags.length?`<div class="tags">${tags.map(t=>`<span class="tag">${escapeHtml(t)}</span>`).join('')}</div>`:''}
                 <div class="linkwrap meta">${link?`<a href="${escapeAttr(link)}" target="_blank" rel="noopener">Apri sorgente</a>`:''}</div>
-                <div class="ids meta">ID: <code>${escapeHtml(id||'(manca)')}</code> · Linked: ${escapeHtml(linked)}</div>
               </div>
               <div class="actions-row">
                 <button class="btn" data-open-linker ${id?'':'disabled'}>${id?'Linka…':'Genera ID per abilitare'}</button>
