@@ -35,6 +35,21 @@
       .meta { color:var(--muted); font-size:12px; margin-top:4px; }
       .tags { margin-top:6px; display:flex; gap:6px; flex-wrap: wrap; }
       .tag { font-size:11px; color:white; background:var(--accent2); padding:3px 7px; border-radius:10px; }
+      /* Link widget */
+      .overlay { position:fixed; inset:0; background:rgba(0,0,0,0.45); display:flex; align-items:center; justify-content:center; z-index:99999; }
+      .link-widget { width: min(1000px, 95vw); height:min(70vh, 720px); background:#fff; border-radius:12px; overflow:hidden; box-shadow:0 10px 30px rgba(0,0,0,0.3); display:grid; grid-template-columns: 1fr 1fr; }
+      .lw-header { grid-column: 1 / span 2; padding:10px 12px; background:linear-gradient(90deg, var(--accent), var(--accent2)); color:#fff; display:flex; align-items:center; gap:8px; }
+      .lw-header b { flex:1; }
+      .lw-left { border-right:1px solid #e5ecf0; padding:10px; overflow:auto; }
+      .lw-right { padding:10px; overflow:auto; display:flex; flex-direction:column; justify-content:space-between; }
+      .lw-search { width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:8px; }
+      .lw-item { border-bottom:1px solid #eef3f6; padding:8px; cursor:pointer; }
+      .lw-item:hover { background:#f7fafc; }
+      .lw-item .t { color:#1f2937; font-weight:600; }
+      .lw-item .m { color:#6b7280; font-size:12px; margin-top:4px; }
+      .lw-actions { display:flex; gap:8px; margin-top:10px; }
+      .btn { padding:8px 12px; border-radius:8px; border:1px solid #cbd5e1; background:#fff; cursor:pointer; }
+      .btn.primary { background:var(--accent2); color:#fff; border-color:var(--accent2); }
     </style>
   </head>
   <body>
@@ -74,6 +89,27 @@
       </section>
     </main>
 
+    <!-- Overlay per linking -->
+    <div id="linkOverlay" class="overlay" style="display:none;">
+      <div class="link-widget">
+        <div class="lw-header">
+          <b>Seleziona note da linkare</b>
+          <button class="btn" onclick="closeLinkWidget()">Chiudi</button>
+        </div>
+        <div class="lw-left">
+          <input id="lwSearch" class="lw-search" placeholder="Cerca note…" />
+          <div id="lwList"></div>
+        </div>
+        <div class="lw-right">
+          <div id="lwSelected"></div>
+          <div class="lw-actions">
+            <button class="btn" onclick="closeLinkWidget()">Annulla</button>
+            <button class="btn primary" onclick="confirmLink()">Linka</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <script>
       const DEFAULT_APPS_URL = "https://script.google.com/macros/s/AKfycbyRXsW2jhj_NarPEyX5T8Yqf8U05qrZtPWReMwC9oW4dHTqXegnZhUmCwuYVmMXZ1uX/exec";
 
@@ -97,32 +133,32 @@
       });
 
       async function loadAll() {
-  try {
-    const url = new URL(DEFAULT_APPS_URL);
-    url.searchParams.set('mode', 'all');
-    const res = await fetch(url.toString());
-    const json = await res.json();
-    state.notes = Array.isArray(json.notes) ? json.notes : [];
-    state.data = Array.isArray(json.data) ? json.data : [];
-    populateFilters();
-    renderNotes();
-    renderData();
-  } catch (e) {
-    try {
-      const url = new URL(DEFAULT_APPS_URL);
-      url.searchParams.set('mode', 'all');
-      const data = await jsonp(url.toString());
-      state.notes = Array.isArray(data.notes) ? data.notes : [];
-      state.data = Array.isArray(data.data) ? data.data : [];
-      populateFilters();
-      renderNotes();
-      renderData();
-    } catch (e2) {
-      console.error('Errore caricamento dati:', e2);
-      alert('Errore nel recupero dati dal server.');
-    }
-  }
-}
+        try {
+          const url = new URL(DEFAULT_APPS_URL);
+          url.searchParams.set('mode', 'all');
+          const res = await fetch(url.toString());
+          const json = await res.json();
+          state.notes = Array.isArray(json.notes) ? json.notes : [];
+          state.data = Array.isArray(json.data) ? json.data : [];
+          populateFilters();
+          renderNotes();
+          renderData();
+        } catch (e) {
+          try {
+            const url = new URL(DEFAULT_APPS_URL);
+            url.searchParams.set('mode', 'all');
+            const data = await jsonp(url.toString());
+            state.notes = Array.isArray(data.notes) ? data.notes : [];
+            state.data = Array.isArray(data.data) ? data.data : [];
+            populateFilters();
+            renderNotes();
+            renderData();
+          } catch (e2) {
+            console.error('Errore caricamento dati:', e2);
+            alert('Errore nel recupero dati dal server.');
+          }
+        }
+      }
 
       function switchTab(which) {
         const nBtn = document.getElementById('tabNotes');
@@ -221,45 +257,12 @@
               <div class="meta">${a}</div>
               <div class="meta">ID: <code>${escapeHtml(id || '(manca)')}</code></div>
               <div class="meta">Linked IDs: ${escapeHtml(linked)}</div>
-              <div class="meta" style="margin-top:8px;">Collega tramite titolo:</div>
-              <div class="linker" style="display:grid; grid-template-columns: 1fr auto; gap:6px; align-items:center; margin-top:4px;">
-                <input data-link-search placeholder="Cerca titolo/DOI" style="padding:6px; border-radius:6px; border:1px solid #aac; background:#f0f8ff; color:var(--text); grid-column: 1 / span 2;" />
-                <select data-link-select size="4" style="padding:6px; border-radius:6px; border:1px solid #aac; background:#f0f8ff; color:var(--text);"></select>
-                <button data-link-add style="padding:6px 10px; border:0; border-radius:6px; background:var(--accent2); color:#fff; font-weight:600; cursor:pointer;">Linka a</button>
+              <div class="meta" style="margin-top:8px; display:flex; gap:8px; align-items:center;">
+                <button class="btn" data-open-linker ${id?'':'disabled'}>${id? 'Linka…' : 'Genera ID per abilitare'}</button>
               </div>
             `;
-            // Wire linker controls
-            const linkSel = div.querySelector('[data-link-select]');
-            const linkSearch = div.querySelector('[data-link-search]');
-            const linkAdd = div.querySelector('[data-link-add]');
-            const disableLinker = !id;
-            if (disableLinker) {
-              linkSel.disabled = true; linkSearch.disabled = true; linkAdd.disabled = true;
-              linkSearch.placeholder = 'Genera ID per abilitare';
-            }
-            const candidates = state.notes
-              .filter(n => String(n.ID||'') && String(n.ID) !== id)
-              .map(n => ({ id: String(n.ID), title: String(n.Title||'').trim() || '(Senza titolo)', doi: String(n.DOI||'').trim() }));
-            function shortId(s){ return String(s).slice(0,8); }
-            function optionLabel(n){ const parts=[n.title]; if (n.doi) parts.push(n.doi); parts.push(shortId(n.id)); return parts.join(' — '); }
-            function renderOptions(q){ const query=String(q||'').toLowerCase(); const items=!query?candidates:candidates.filter(n=>optionLabel(n).toLowerCase().includes(query)); linkSel.innerHTML=items.map(n=>`<option value="${escapeAttr(n.id)}">${escapeHtml(optionLabel(n))}</option>`).join(''); }
-            renderOptions('');
-            linkSearch.oninput = () => renderOptions(linkSearch.value);
-            if (linkAdd) linkAdd.onclick = async () => {
-              try {
-                const targetId = linkSel.value; if (!targetId) return;
-                const current = String(linked||'');
-                const arr = current.split(/[,;\s]+/).map(s=>s.trim()).filter(Boolean);
-                if (!arr.includes(targetId)) arr.push(targetId);
-                // Usa JSONP (GET) per evitare CORS
-                const url = new URL(DEFAULT_APPS_URL);
-                url.searchParams.set('mode','updateLinks');
-                url.searchParams.set('id', id);
-                url.searchParams.set('linkedIds', arr.join(', '));
-                await jsonp(url.toString());
-                await loadAll();
-              } catch (e) { console.error('Errore link add', e); alert('Errore nel collegare le note'); }
-            };
+            const openBtn = div.querySelector('[data-open-linker]');
+            if (openBtn) openBtn.onclick = () => openLinkWidget(item);
             box.appendChild(div);
           });
 
@@ -357,7 +360,7 @@
       function escapeAttr(str) {
         return escapeHtml(str).replace(/"/g, '&quot;');
       }
-      // Genera ID per le note senza ID (JSONP-only per evitare CORS)
+
       async function generateIds() {
         try {
           if (!confirm('Assegnare un ID alle note senza ID?')) return;
@@ -372,7 +375,7 @@
           alert('Errore durante la generazione degli ID');
         }
       }
-      // JSONP helper for CORS-restricted contexts
+
       function jsonp(baseUrl) {
         return new Promise((resolve, reject) => {
           try {
@@ -389,6 +392,54 @@
             function cleanup(){ try{ delete window[cbName]; }catch{} try{ s.remove(); }catch{} clearTimeout(t); }
           } catch (err) { reject(err); }
         });
+      }
+
+      // ---- Link widget logic ----
+      let linkOrigin = null;
+
+      function openLinkWidget(item){
+        linkOrigin = item;
+        document.getElementById('linkOverlay').style.display = 'flex';
+        renderLinkList();
+        document.getElementById('lwSearch').oninput = renderLinkList;
+      }
+
+      function closeLinkWidget(){
+        document.getElementById('linkOverlay').style.display = 'none';
+        linkOrigin = null;
+      }
+
+      function renderLinkList(){
+        const q = document.getElementById('lwSearch').value.trim().toLowerCase();
+        const list = document.getElementById('lwList');
+        list.innerHTML = '';
+        state.notes.forEach(n=>{
+          if(n.ID===linkOrigin.ID) return;
+          const hay = [n.Title,n.Text,n.Tags].map(x=>String(x||'').toLowerCase()).join(' ');
+          if(q && !hay.includes(q)) return;
+          const div = document.createElement('div');
+          div.className='lw-item';
+          div.innerHTML = `
+            <label style="display:flex;gap:6px;align-items:flex-start;">
+              <input type="checkbox" value="${escapeAttr(n.ID||'')}">
+              <div>
+                <div class="t">${escapeHtml(n.Title||'(senza titolo)')}</div>
+                <div class="m">${escapeHtml(n.Text||'')}</div>
+                <div class="tags">${String(n.Tags||'').split(',').map(t=>`<span class="tag">${escapeHtml(t.trim())}</span>`).join('')}</div>
+              </div>
+            </label>`;
+          list.appendChild(div);
+        });
+      }
+
+      function confirmLink(){
+        const checked=[...document.querySelectorAll('#lwList input[type=checkbox]:checked')]
+          .map(c=>c.value).filter(Boolean);
+        if(linkOrigin){
+          linkOrigin.LinkedIDs = checked.join(',');
+          renderNotes();
+        }
+        closeLinkWidget();
       }
     </script>
   </body>
