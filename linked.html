@@ -6,56 +6,365 @@
   <title>Linked Notes – Mindmap</title>
   <style>
     :root{
-      --bg:#0b1220; --grid:#111827; --panel:#0f172a; --text:#e5eef8; --muted:#93a3b5;
-      --accent:#2e8b57; --accent2:#1e90ff; --edge:#6aa2ff55; --node:#0f172a; --nodeBorder:#334155;
+      --bg:#0b1220; --grid:#0f172a; --panel:#0f172a; --text:#e5eef8; --muted:#93a3b5;
+      --accent:#2e8b57; --accent2:#1e90ff; --edge:#6aa2ff55; --edge-strong:#6aa2ffcc;
+      --node:#0f172a; --nodeBorder:#334155; --ring:#60a5fa;
     }
     *{box-sizing:border-box}
     html,body{height:100%;margin:0;background:radial-gradient(1200px 1200px at 30% 10%, #0f1a2f 0%, #0b1220 45%, #070d18 100%); color:var(--text); font-family:system-ui,Segoe UI,Roboto,Arial}
-    header{position:fixed;left:0;right:0;top:0;z-index:10;display:flex;gap:8px;align-items:center;padding:10px 12px;background:linear-gradient(90deg,var(--accent),var(--accent2));box-shadow:0 2px 10px #0007}
-    header b{font-weight:700}
+    :focus-visible{outline:3px solid var(--ring); outline-offset:2px; border-radius:10px}
+
+    header{
+      position:fixed;left:0;right:0;top:0;z-index:10;display:flex;gap:8px;align-items:center;
+      padding:10px 12px;background:linear-gradient(90deg,var(--accent),var(--accent2));box-shadow:0 2px 10px #0007
+    }
+    header b{font-weight:800}
     header .sp{flex:1}
     header input{padding:8px 10px;border:1px solid #ffffff66;border-radius:8px;background:#ffffff22;color:#fff;min-width:260px}
     header .btn{padding:8px 12px;border-radius:8px;border:1px solid #fff8;background:#fff0;color:#fff;cursor:pointer}
-    header .btn.primary{background:#fff;color:#1b2b3c;font-weight:700}
+    header .btn:hover{background:#ffffff22}
+    header .btn.primary{background:#fff;color:#1b2b3c;font-weight:800}
     #main{position:absolute; inset:56px 0 0 0; overflow:hidden}
 
     /* viewport (pan/zoom) */
-    #viewport{width:100%;height:100%;position:relative;cursor:grab}
+    #viewport{width:100%;height:100%;position:relative;cursor:grab;background:
+      radial-gradient(transparent 0 2px, #0b1220 3px) 0 0/40px 40px}
     #viewport.grabbing{cursor:grabbing}
 
-    /* STAGE: serve una dimensione reale o l’SVG rimane 0×0 */
+    /* WORLD + STAGE */
+    #world{position:absolute; left:0; top:0; width:100%; height:100%; transform:translate(0px,0px) scale(1); transform-origin:0 0;}
     #stage{
-      position:absolute; left:50%; top:50%;
-      width:3000px; height:3000px;             /* FIX principale */
-      transform:translate(-50%,-50%) scale(1);
-      transform-origin:50% 50%;
+      position:absolute; left:0; top:0; width:3000px; height:3000px; /* spazio di lavoro */
       background:
-        radial-gradient(transparent 0 2px, #0b1220 3px) 0 0/40px 40px; /* griglia leggera */
+        radial-gradient(circle at 50% 50%, #0c1324 0%, transparent 60%),
+        linear-gradient(transparent, transparent); /* placeholder per future texture */
     }
 
-    /* edges */
-    #edges{position:absolute; left:0; top:0; width:100%; height:100%; pointer-events:none; display:block}
-
-    /* nodes layer */
-    #nodes{position:absolute; left:0; top:0; width:100%; height:100%}
+    /* layers */
+    #edges{position:absolute; left:0; top:0; width:3000px; height:3000px; pointer-events:none; display:block}
+    #nodes{position:absolute; left:0; top:0; width:3000px; height:3000px}
 
     .node{
       position:absolute; transform:translate(-50%,-50%);
       background:linear-gradient(180deg,#0f172a,#0b1424);
       border:1px solid var(--nodeBorder); border-radius:14px;
-      padding:10px; width:220px; box-shadow:0 8px 24px #0008
+      padding:10px; width:240px; box-shadow:0 8px 24px #0008
     }
     .node.center{border:1px solid #fff; box-shadow:0 12px 28px #000c}
-    .node .title{font-weight:700; font-size:14px; line-height:1.2}
+    .node .title{font-weight:800; font-size:14px; line-height:1.2}
     .node .meta{color:var(--muted); font-size:12px; margin-top:6px}
     .node .tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
     .node .tag{font-size:11px;background:#1e293b;color:#dbe5f2;border:1px solid #324256;padding:2px 6px;border-radius:10px}
     .node .note{margin-top:8px; font-size:12px; color:#d8e7ff}
     .thumb{width:100%; height:110px; object-fit:cover; border-radius:10px; border:1px solid #22314a; margin-top:8px; background:#0b1528}
     .noimg{width:100%; height:110px; border-radius:10px; border:1px dashed #22314a; display:flex; align-items:center; justify-content:center; font-size:12px; color:#8ba1bf; margin-top:8px}
-    .node .actions{display:flex;gap:8px;margin-top:10px}
-    .node .btn{padding:6px 8px; font-size:12px; border-radius:8px; border:1px solid #2b3b56; background:#0e1a2d; color:#e6f0ff; cursor:pointer}
+    .node .actions{display:flex;gap:8px;margin-top:10px; flex-wrap:wrap}
+    .node .btn{padding:6px 8px; font-size:12px; border-radius:8px; border:1px solid #2b3b56; background:#0e1a2d; color:#e6f0ff; cursor:pointer; text-decoration:none}
     .node .btn:hover{border-color:#5b7bb6}
     line.edge{stroke:var(--edge); stroke-width:2}
 
-    .legend{position:fixed;left:12px;bottom:12px;background:#0c1528dd;border:1px sol
+    .legend{
+      position:fixed;left:12px;bottom:12px;background:#0c1528dd;border:1px solid #1f2b44;color:#cfe3ff;
+      padding:8px 10px;border-radius:10px;font-size:12px;box-shadow:0 6px 18px #0006
+    }
+    .legend b{color:#fff}
+
+    .toast-container{position:fixed;top:16px;right:16px;display:flex;flex-direction:column;gap:8px;z-index:100000}
+    .toast{min-width:240px;max-width:360px;background:#0e1a2d;border:1px solid #2b3b56;border-left:4px solid #60a5fa;box-shadow:0 4px 16px rgba(0,0,0,.35);padding:10px 12px;border-radius:10px;font-size:13px;color:#e6f0ff}
+    .toast.ok{border-left-color:#16a34a}
+    .toast.err{border-left-color:#dc2626}
+    .toast.info{border-left-color:#60a5fa}
+  </style>
+</head>
+<body>
+  <header>
+    <b>Linked Notes – Mindmap</b>
+    <div class="sp"></div>
+    <input id="search" placeholder="Cerca per titolo / tag / testo" aria-label="Cerca" />
+    <button id="fitBtn" class="btn">Fit</button>
+    <button id="resetBtn" class="btn">Reset</button>
+    <button id="zoomInBtn" class="btn">+</button>
+    <button id="zoomOutBtn" class="btn">−</button>
+    <button id="reloadBtn" class="btn primary">Ricarica</button>
+  </header>
+
+  <div id="main">
+    <div id="viewport" aria-label="Canvas interattivo mindmap">
+      <div id="world">
+        <div id="stage">
+          <svg id="edges" xmlns="http://www.w3.org/2000/svg"></svg>
+          <div id="nodes"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="legend">
+    <div><b>Hint:</b> trascina per muovere, rotellina per zoom. URL: <code>?id=&lt;ID nota&gt;</code></div>
+  </div>
+
+  <div id="toastContainer" class="toast-container" aria-live="polite" aria-atomic="true"></div>
+
+  <script>
+    // --- Config
+    const DEFAULT_APPS_URL="https://script.google.com/macros/s/AKfycbyRXsW2jhj_NarPEyX5T8Yqf8U05qrZtPWReMwC9oW4dHTqXegnZhUmCwuYVmMXZ1uX/exec";
+
+    // --- State
+    const state={ notes:[], nodes:[], edges:[], map:new Map(), focusedId:null };
+    // Pan/zoom
+    let scale=1, offsetX=200, offsetY=200, isPanning=false, panStart={x:0,y:0}, panOrigin={x:0,y:0};
+
+    // --- Init
+    document.addEventListener('DOMContentLoaded',()=>{
+      bindUI();
+      loadAll();
+    });
+
+    function bindUI(){
+      const vp=document.getElementById('viewport');
+      vp.addEventListener('mousedown',(e)=>{ isPanning=true; vp.classList.add('grabbing'); panStart={x:e.clientX,y:e.clientY}; panOrigin={x:offsetX,y:offsetY}; });
+      window.addEventListener('mouseup',()=>{ isPanning=false; document.getElementById('viewport').classList.remove('grabbing'); });
+      window.addEventListener('mousemove',(e)=>{ if(!isPanning) return; const dx=e.clientX-panStart.x, dy=e.clientY-panStart.y; offsetX=panOrigin.x+dx; offsetY=panOrigin.y+dy; applyTransform(); });
+
+      // Wheel zoom (ctrl/trackpad friendly)
+      vp.addEventListener('wheel',(e)=>{
+        e.preventDefault();
+        const delta = Math.sign(e.deltaY);
+        zoomAt(delta>0?0.9:1.1, e.clientX, e.clientY);
+      }, {passive:false});
+
+      document.getElementById('zoomInBtn').onclick=()=>zoomAt(1.15);
+      document.getElementById('zoomOutBtn').onclick=()=>zoomAt(0.85);
+      document.getElementById('resetBtn').onclick=resetView;
+      document.getElementById('fitBtn').onclick=fitToContent;
+      document.getElementById('reloadBtn').onclick=loadAll;
+      document.getElementById('search').oninput=filterHighlight;
+    }
+
+    function applyTransform(){
+      const world=document.getElementById('world');
+      world.style.transform=`translate(${offsetX}px, ${offsetY}px) scale(${scale})`;
+    }
+    function zoomAt(factor, cx, cy){
+      const vp=document.getElementById('viewport');
+      const rect=vp.getBoundingClientRect();
+      const px = (cx==null? rect.width/2 : (cx-rect.left) - offsetX)/scale;
+      const py = (cy==null? rect.height/2: (cy-rect.top)  - offsetY)/scale;
+      const newScale = clamp(scale*factor, 0.25, 3.5);
+      offsetX -= px*(newScale-scale);
+      offsetY -= py*(newScale-scale);
+      scale=newScale;
+      applyTransform();
+    }
+    function resetView(){
+      scale=1; offsetX=200; offsetY=200; applyTransform();
+    }
+    function fitToContent(){
+      if(!state.nodes.length) return;
+      // bounding box in stage coordinates
+      const xs=state.nodes.map(n=>n.x), ys=state.nodes.map(n=>n.y);
+      const minX=Math.min(...xs)-200, maxX=Math.max(...xs)+200;
+      const minY=Math.min(...ys)-200, maxY=Math.max(...ys)+200;
+      const contentW=maxX-minX, contentH=maxY-minY;
+
+      const vp=document.getElementById('viewport');
+      const rect=vp.getBoundingClientRect();
+      const s=clamp(Math.min(rect.width/contentW, rect.height/contentH), 0.25, 3.5);
+      scale=s;
+      offsetX = (rect.width - contentW*s)/2 - minX*s;
+      offsetY = (rect.height - contentH*s)/2 - minY*s;
+      applyTransform();
+    }
+    function clamp(v,min,max){ return Math.max(min, Math.min(max,v)); }
+
+    // --- Data Loading (fetch + JSONP fallback)
+    async function loadAll(){
+      showToast('Caricamento dati…','info',1500);
+      try{
+        const url=new URL(DEFAULT_APPS_URL); url.searchParams.set('mode','all');
+        const res=await fetch(url.toString()); const json=await res.json();
+        state.notes=Array.isArray(json.notes)?json.notes:[];
+      }catch(e){
+        try{
+          const url=new URL(DEFAULT_APPS_URL); url.searchParams.set('mode','all');
+          const data=await jsonp(url.toString());
+          state.notes=Array.isArray(data.notes)?data.notes:[];
+        }catch(e2){
+          console.error(e2); showToast('Errore caricamento','err',4000); return;
+        }
+      }
+      indexNotes();
+      buildGraphFromQuery();
+      renderAll();
+      fitToContent();
+    }
+
+    function jsonp(baseUrl){
+      return new Promise((resolve,reject)=>{
+        try{
+          const url=new URL(baseUrl); const cb='cb_'+Math.random().toString(36).slice(2);
+          url.searchParams.set('callback',cb);
+          const s=document.createElement('script'); let done=false;
+          window[cb]=(data)=>{ done=true; cleanup(); resolve(data); };
+          s.src=url.toString(); s.onerror=(e)=>{ cleanup(); reject(e); };
+          document.body.appendChild(s);
+          const t=setTimeout(()=>{ if(!done){ cleanup(); reject(new Error('JSONP timeout')); } },12000);
+          function cleanup(){ try{ delete window[cb]; }catch{} try{ s.remove(); }catch{} clearTimeout(t); }
+        }catch(err){ reject(err); }
+      });
+    }
+
+    // --- Graph build
+    function indexNotes(){
+      state.map.clear();
+      for(const n of state.notes){
+        const id = (n && n.ID!=null) ? String(n.ID) : '';
+        if(id) state.map.set(id, n);
+      }
+    }
+
+    function buildGraphFromQuery(){
+      const sourceId = new URLSearchParams(location.search).get('id');
+      state.focusedId = sourceId && state.map.has(sourceId) ? sourceId : null;
+      if(!state.focusedId){
+        // pick first note with links if not provided
+        const candidate = state.notes.find(n => String(n.LinkedIDs||'').trim());
+        state.focusedId = candidate && candidate.ID ? String(candidate.ID) : (state.notes[0]?.ID ? String(state.notes[0].ID) : null);
+      }
+      buildStarGraph(state.focusedId);
+    }
+
+    function buildStarGraph(centerId){
+      state.nodes=[]; state.edges=[];
+      if(!centerId || !state.map.has(centerId)) return;
+
+      const center = state.map.get(centerId);
+      const C = { id:String(centerId), title:center.Title||'(senza titolo)', note:center.Note||'', text:center.Text||'',
+                  doi:center.DOI||'', tags:String(center.Tags||'').split(',').map(s=>s.trim()).filter(Boolean),
+                  img:center.ImageLink||'', link:center.Link||center.URL||'', type:center.Type||'',
+                  x:1500, y:1500, center:true };
+      state.nodes.push(C);
+
+      const linkedIds = String(center.LinkedIDs||'').split(',').map(s=>s.trim()).filter(Boolean);
+      const angles = linkedIds.length>0 ? linkedIds.map((_,i)=> i*(2*Math.PI/linkedIds.length)) : [];
+      const radius = 380;
+
+      linkedIds.forEach((lid, idx)=>{
+        if(!state.map.has(lid)) return;
+        const n = state.map.get(lid);
+        const a = angles[idx] ?? (idx*0.9);
+        const node = {
+          id:String(lid), title:n.Title||'(senza titolo)', note:n.Note||'', text:n.Text||'',
+          doi:n.DOI||'', tags:String(n.Tags||'').split(',').map(s=>s.trim()).filter(Boolean),
+          img:n.ImageLink||'', link:n.Link||n.URL||'', type:n.Type||'',
+          x: C.x + Math.cos(a)*radius,
+          y: C.y + Math.sin(a)*radius,
+          center:false
+        };
+        state.nodes.push(node);
+        state.edges.push({a:C.id, b:node.id});
+      });
+    }
+
+    // --- Render
+    function renderAll(){
+      const nodesLayer=document.getElementById('nodes');
+      const edgesSvg=document.getElementById('edges');
+      nodesLayer.innerHTML=''; edgesSvg.innerHTML='';
+
+      // edges
+      for(const e of state.edges){
+        const A = state.nodes.find(n=>n.id===e.a);
+        const B = state.nodes.find(n=>n.id===e.b);
+        if(!A||!B) continue;
+        const line=document.createElementNS('http://www.w3.org/2000/svg','line');
+        line.setAttribute('class','edge');
+        line.setAttribute('x1',A.x); line.setAttribute('y1',A.y);
+        line.setAttribute('x2',B.x); line.setAttribute('y2',B.y);
+        edgesSvg.appendChild(line);
+      }
+
+      // nodes
+      for(const n of state.nodes){
+        const el=document.createElement('div'); el.className='node'+(n.center?' center':'');
+        el.style.left = n.x+'px'; el.style.top = n.y+'px';
+        el.setAttribute('data-id', n.id);
+
+        const tagsHtml = n.tags.map(t=>`<span class="tag">${escapeHtml(t)}</span>`).join(' ');
+        const imgHtml  = n.img ? `<img class="thumb" src="${escapeAttr(n.img)}" alt="thumb ${escapeAttr(n.id)}">`
+                               : `<div class="noimg">no img</div>`;
+        const linkHtml = n.link ? `<a class="btn" href="${escapeAttr(n.link)}" target="_blank" rel="noopener">Apri sorgente</a>` : '';
+        const linkedHtml = `<a class="btn" href="?id=${encodeURIComponent(n.id)}">Apri collegati</a>`;
+
+        el.innerHTML = `
+          <div class="title">${escapeHtml(n.title)}</div>
+          <div class="meta">ID: <code>${escapeHtml(n.id)}</code>${n.doi?` · DOI: ${escapeHtml(n.doi)}`:''}</div>
+          ${tagsHtml?`<div class="tags">${tagsHtml}</div>`:''}
+          ${n.note?`<div class="note"><b>Nota:</b> ${escapeHtml(n.note)}</div>`:''}
+          ${imgHtml}
+          <div class="actions">
+            ${linkHtml}
+            ${linkedHtml}
+          </div>
+        `;
+        nodesLayer.appendChild(el);
+      }
+    }
+
+    // --- Search highlight
+    function filterHighlight(){
+      const q = document.getElementById('search').value.trim().toLowerCase();
+      const nodes = document.querySelectorAll('.node');
+      nodes.forEach(n=>{
+        n.style.borderColor = n.classList.contains('center') ? '#fff' : 'var(--nodeBorder)';
+      });
+      const lines = document.querySelectorAll('line.edge');
+      lines.forEach(l=> l.setAttribute('stroke','var(--edge)'));
+
+      if(!q) return;
+      // highlight matching titles/tags/note/text
+      for(const n of state.nodes){
+        const hay = [n.title, n.note, n.text, n.tags.join(' ')].join(' ').toLowerCase();
+        if(hay.includes(q)){
+          const el = document.querySelector(`.node[data-id="${cssEscape(n.id)}"]`);
+          if(el) el.style.borderColor = '#93c5fd';
+          // strengthen edges touching
+          for(const e of state.edges){
+            if(e.a===n.id || e.b===n.id){
+              const A = state.nodes.find(nn=>nn.id===e.a);
+              const B = state.nodes.find(nn=>nn.id===e.b);
+              if(!A||!B) continue;
+              const line = findEdgeSvg(A.x,A.y,B.x,B.y);
+              if(line) line.setAttribute('stroke','var(--edge-strong)');
+            }
+          }
+        }
+      }
+    }
+    function findEdgeSvg(x1,y1,x2,y2){
+      const edgesSvg=document.getElementById('edges');
+      const lines = edgesSvg.querySelectorAll('line');
+      for(const l of lines){
+        if(l.getAttribute('x1')==x1 && l.getAttribute('y1')==y1 && l.getAttribute('x2')==x2 && l.getAttribute('y2')==y2){
+          return l;
+        }
+      }
+      return null;
+    }
+
+    // --- Utils
+    function escapeHtml(str){ return String(str).replace(/[&<>"']/g,s=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s])); }
+    function escapeAttr(str){ return escapeHtml(str).replace(/"/g,'&quot;'); }
+    function cssEscape(s){ return s.replace(/"/g,'\\"').replace(/\\/g,'\\\\'); }
+
+    function showToast(message,kind='info',timeout=3000){
+      try{
+        const c=document.getElementById('toastContainer'); if(!c) return;
+        const el=document.createElement('div'); el.className='toast '+(kind||'info'); el.textContent=String(message);
+        c.appendChild(el); const t=setTimeout(()=>{ try{ el.remove(); }catch{} }, timeout||3000);
+        el.addEventListener('click',()=>{ clearTimeout(t); try{ el.remove(); }catch{} });
+      }catch(e){ console.warn('toast error',e); }
+    }
+  </script>
+</body>
+</html>
