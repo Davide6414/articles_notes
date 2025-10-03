@@ -29,18 +29,23 @@
       .btn{ padding:8px 14px; border-radius:10px; border:1px solid var(--border-strong); background:#fff; cursor:pointer; font-size:13px; font-weight:600 }
       .btn:hover{ background:#f3f4f6 }
       .toast-container{ position:fixed; top:16px; right:16px; display:flex; flex-direction:column; gap:8px; z-index:100000 }
-      .toast{ min-width:260px; max-width:380px; background:#fff; border:1px solid var(--border-strong); border-left:6px solid var(--accent); box-shadow:0 6px 20px rgba(2,6,23,.18); padding:12px 14px; border-radius:12px; font-size:14px; color:var(--text) }
+      .toast{ min-width:260px; max-width:380px; background:#fff; border:1px solid var(--border-strong); border-left:6px solid var(--accent); box-shadow:0 6px 20px rgba(2,6,23,.18); padding:12px 14px; border-radius:12px; font-size:14px; color:#var(--text) }
       .toast.err{ border-left-color:#dc2626 }
       .toast.ok{ border-left-color:#16a34a }
       .linkwrap a{ color:#0ea5e9; text-decoration:none; font-weight:700 }
       .linkwrap a:hover{ text-decoration:underline }
+      /* Confronto */
+      .compare-table{ width:100%; border-collapse:collapse; margin-top:6px }
+      .compare-table th,.compare-table td{ border:1px solid var(--border); padding:6px 8px; font-size:13px; text-align:left }
+      .compare-table th{ background:#f8fafc }
+      .badge{ display:inline-block; padding:2px 6px; border:1px solid var(--border-strong); border-radius:999px; font-size:11px; background:#eef6ff }
     </style>
   </head>
   <body>
     <header class="header"><h1>Dati</h1></header>
     <main>
       <div class="filters">
-        <input id="dataSearch" placeholder="Cerca per variabile / DOI" aria-label="Cerca nei dati" />
+        <input id="dataSearch" placeholder="Cerca per variabile / DOI / tag / tipo" aria-label="Cerca nei dati" />
         <select id="dataVarFilter" aria-label="Filtra per variabile"><option value="">Tutte le variabili</option></select>
         <button id="dataExportCsv" title="Esporta i dati filtrati in CSV">Esporta CSV</button>
       </div>
@@ -86,7 +91,7 @@
         return state.data.filter(d=>{
           if(varFilter && String(d.Variable)!==varFilter) return false;
           if(!search) return true;
-          const hay=[d.Variable,d.DOI,d.URL,d.Notes,d.Unit].map(x=>String(x||'').toLowerCase()).join(' ');
+          const hay=[d.Variable,d.DOI,d.URL,d.Notes,d.Unit,d.DataTags,d.DataType].map(x=>String(x||'').toLowerCase()).join(' ');
           return hay.includes(search);
         });
       }
@@ -101,18 +106,59 @@
           const grid=document.createElement('div'); grid.className='items-grid';
           groups[variable].forEach(item=>{
             const link=String(item.Link||item.URL||''); const a=link?`<a href="${escapeAttr(link)}" target="_blank" rel="noopener">Apri</a>`:'';
-            const val=String(item.Value||''); const unit=String(item.Unit||''); const mean=String(item.Mean||''); const std=String(item.StdDev||''); const n=String(item.N||'');
-            const cval=String(item.ControlValue||''); const cunit=String(item.ControlUnit||''); const cmean=String(item.ControlMean||''); const cstd=String(item.ControlStdDev||''); const cn=String(item.ControlN||'');
-            const cnotes=String(item.ControlNotes||'');
+
+            // Sperimentale
+            const val = String(item.Value||'');
+            const unit = String(item.Unit||'');
+            const n = String(item.N||'');
+            const mean = String(item.Mean||'');
+            const std = String(item.StdDev||'');
+            const notesExp = String(item.Notes||'');
+
+            // Controllo (inclusi campi opzionali ControlValue/ControlUnit se presenti)
+            const cval = String(item.ControlValue||'');
+            const cunit = String(item.ControlUnit||'');
+            const cn = String(item.ControlN||'');
+            const cmean = String(item.ControlMean||'');
+            const cstd = String(item.ControlStdDev||'');
+            const cnotes = String(item.ControlNotes||'');
+
+            // Metadati
+            const doi = String(item.DOI||'');
+            const createdAt = String(item.CreatedAt||'');
+            const clientTs = String(item.ClientTimestamp||'');
+            const dtype = String(item.DataType||'');
+            const dtags = String(item.DataTags||'');
+            const tagsHtml = dtags ? dtags.split(',').map(t=>t.trim()).filter(Boolean).map(t=>`<span class="badge">${escapeHtml(t)}</span>`).join(' ') : '';
+
             const card=document.createElement('div'); card.className='note-card';
             card.innerHTML=`
               <div class="card-body">
-                <div><b>${escapeHtml(val)} ${escapeHtml(unit)}</b> <span class="meta">N=${escapeHtml(n)} · mean=${escapeHtml(mean)} · sd=${escapeHtml(std)}</span></div>
-                <div class="meta">Controllo: <b>${escapeHtml(cval)} ${escapeHtml(cunit)}</b> · N=${escapeHtml(cn)} · mean=${escapeHtml(cmean)} · sd=${escapeHtml(cstd)}</div>
-                ${cnotes?`<div class="meta">Note controllo: ${escapeHtml(cnotes)}</div>`:''}
-                <div class="meta">DOI: ${escapeHtml(String(item.DOI||''))}</div>
-                <div class="clamp-3">${escapeHtml(String(item.Notes||''))}</div>
-                <div class="meta" style="margin-top:8px">${a}</div>
+                <table class="compare-table">
+                  <thead>
+                    <tr><th></th><th>Sperimentale</th><th>Controllo</th></tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>Valore</td>
+                      <td><b>${escapeHtml(val)} ${escapeHtml(unit)}</b></td>
+                      <td><b>${escapeHtml(cval)} ${escapeHtml(cunit)}</b></td>
+                    </tr>
+                    <tr><td>N</td><td>${escapeHtml(n)}</td><td>${escapeHtml(cn)}</td></tr>
+                    <tr><td>Media</td><td>${escapeHtml(mean)}</td><td>${escapeHtml(cmean)}</td></tr>
+                    <tr><td>Dev. std</td><td>${escapeHtml(std)}</td><td>${escapeHtml(cstd)}</td></tr>
+                    <tr>
+                      <td>Note</td>
+                      <td>${escapeHtml(notesExp)}</td>
+                      <td>${escapeHtml(cnotes)}</td>
+                    </tr>
+                  </tbody>
+                </table>
+
+                <div class="meta" style="margin-top:8px;">DOI: ${escapeHtml(doi)}</div>
+                <div class="meta">Tipo: ${dtype?`<span class="badge">${escapeHtml(dtype)}</span>`:'-'}${dtags?` · Tag: ${tagsHtml}`:''}</div>
+                <div class="meta">Creato: ${escapeHtml(createdAt)} · ClientTS: ${escapeHtml(clientTs)}</div>
+                <div class="meta linkwrap" style="margin-top:8px">${a}</div>
               </div>`;
             grid.appendChild(card);
           });
@@ -122,7 +168,11 @@
       }
 
       function exportDataCsv(){
-        const headers=['CreatedAt','DOI','URL','Link','Variable','Value','Unit','N','Mean','StdDev','ControlValue','ControlUnit','ControlN','ControlMean','ControlStdDev','ControlNotes','Notes','ClientTimestamp'];
+        const headers=[
+          'CreatedAt','DOI','URL','Link','Variable','Value','Unit','N','Mean','StdDev',
+          'Notes','ClientTimestamp','ControlN','ControlMean','ControlStdDev','ControlNotes',
+          'DataTags','DataType'
+        ];
         const rows=getFilteredData();
         const csv=toCsv(rows,headers); downloadCsv(csv,`data_${timestamp()}.csv`);
       }
