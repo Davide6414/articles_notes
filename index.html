@@ -35,21 +35,26 @@
       .meta { color:var(--muted); font-size:12px; margin-top:4px; }
       .tags { margin-top:6px; display:flex; gap:6px; flex-wrap: wrap; }
       .tag { font-size:11px; color:white; background:var(--accent2); padding:3px 7px; border-radius:10px; }
+
       /* Link widget */
-      .overlay { position:fixed; inset:0; background:rgba(0,0,0,0.45); display:flex; align-items:center; justify-content:center; z-index:99999; }
-      .link-widget { width: min(1000px, 95vw); height:min(70vh, 720px); background:#fff; border-radius:12px; overflow:hidden; box-shadow:0 10px 30px rgba(0,0,0,0.3); display:grid; grid-template-columns: 1fr 1fr; }
+      .overlay { position:fixed; inset:0; background:rgba(0,0,0,0.45); display:none; align-items:center; justify-content:center; z-index:99999; }
+      .link-widget { width: min(1100px, 95vw); height:min(75vh, 780px); background:#fff; border-radius:12px; overflow:hidden; box-shadow:0 10px 30px rgba(0,0,0,0.3); display:grid; grid-template-columns: 1.3fr 0.7fr; }
       .lw-header { grid-column: 1 / span 2; padding:10px 12px; background:linear-gradient(90deg, var(--accent), var(--accent2)); color:#fff; display:flex; align-items:center; gap:8px; }
       .lw-header b { flex:1; }
       .lw-left { border-right:1px solid #e5ecf0; padding:10px; overflow:auto; }
-      .lw-right { padding:10px; overflow:auto; display:flex; flex-direction:column; justify-content:space-between; }
+      .lw-right { padding:10px; overflow:auto; display:flex; flex-direction:column; }
       .lw-search { width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:8px; }
-      .lw-item { border-bottom:1px solid #eef3f6; padding:8px; cursor:pointer; }
+      .lw-list { margin-top:10px; }
+      .lw-item { border-bottom:1px solid #eef3f6; padding:8px; }
       .lw-item:hover { background:#f7fafc; }
       .lw-item .t { color:#1f2937; font-weight:600; }
       .lw-item .m { color:#6b7280; font-size:12px; margin-top:4px; }
       .lw-actions { display:flex; gap:8px; margin-top:10px; }
       .btn { padding:8px 12px; border-radius:8px; border:1px solid #cbd5e1; background:#fff; cursor:pointer; }
       .btn.primary { background:var(--accent2); color:#fff; border-color:var(--accent2); }
+      .muted { color:#6b7280; font-size:12px; }
+      .selected-list { display:flex; flex-direction:column; gap:6px; margin-top:8px; }
+      .pill { display:inline-block; font-size:12px; padding:4px 8px; border-radius:999px; background:#eef6ff; border:1px solid #cbd5e1; }
     </style>
   </head>
   <body>
@@ -90,21 +95,25 @@
     </main>
 
     <!-- Overlay per linking -->
-    <div id="linkOverlay" class="overlay" style="display:none;">
+    <div id="linkOverlay" class="overlay" role="dialog" aria-modal="true" aria-label="Seleziona note da linkare">
       <div class="link-widget">
         <div class="lw-header">
           <b>Seleziona note da linkare</b>
-          <button class="btn" onclick="closeLinkWidget()">Chiudi</button>
+          <button class="btn" id="lwCloseBtn" type="button">Chiudi</button>
         </div>
         <div class="lw-left">
-          <input id="lwSearch" class="lw-search" placeholder="Cerca note…" />
-          <div id="lwList"></div>
+          <input id="lwSearch" class="lw-search" placeholder="Cerca per titolo, testo o tag…" />
+          <div id="lwList" class="lw-list"></div>
         </div>
         <div class="lw-right">
-          <div id="lwSelected"></div>
+          <div>
+            <div class="muted">Sorgente: <code id="lwSourceId"></code></div>
+            <div class="muted" style="margin-top:6px;">Selezionati: <b id="lwCount">0</b></div>
+            <div id="lwSelected" class="selected-list"></div>
+          </div>
           <div class="lw-actions">
-            <button class="btn" onclick="closeLinkWidget()">Annulla</button>
-            <button class="btn primary" onclick="confirmLink()">Linka</button>
+            <button class="btn" id="lwCancelBtn" type="button">Annulla</button>
+            <button class="btn primary" id="lwConfirmBtn" type="button">Linka</button>
           </div>
         </div>
       </div>
@@ -112,7 +121,6 @@
 
     <script>
       const DEFAULT_APPS_URL = "https://script.google.com/macros/s/AKfycbyRXsW2jhj_NarPEyX5T8Yqf8U05qrZtPWReMwC9oW4dHTqXegnZhUmCwuYVmMXZ1uX/exec";
-
       const state = { notes: [], data: [] };
 
       document.addEventListener('DOMContentLoaded', () => {
@@ -128,6 +136,12 @@
         const genBtn = document.getElementById('generateIdsBtn');
         if (genBtn) genBtn.onclick = generateIds;
         document.getElementById('dataExportCsv').onclick = exportDataCsv;
+
+        // overlay controls
+        document.getElementById('lwCloseBtn').onclick = closeLinkWidget;
+        document.getElementById('lwCancelBtn').onclick = closeLinkWidget;
+        document.getElementById('lwConfirmBtn').onclick = confirmLink;
+        document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeLinkWidget(); });
 
         loadAll();
       });
@@ -361,6 +375,26 @@
         return escapeHtml(str).replace(/"/g, '&quot;');
       }
 
+      // ---- JSONP helper ----
+      function jsonp(baseUrl) {
+        return new Promise((resolve, reject) => {
+          try {
+            const url = new URL(baseUrl);
+            const cbName = 'cb_' + Math.random().toString(36).slice(2);
+            url.searchParams.set('callback', cbName);
+            const s = document.createElement('script');
+            let done = false;
+            window[cbName] = (data) => { done = true; cleanup(); resolve(data); };
+            s.src = url.toString();
+            s.onerror = (e) => { cleanup(); reject(e); };
+            document.body.appendChild(s);
+            const t = setTimeout(() => { if (!done) { cleanup(); reject(new Error('JSONP timeout')); } }, 12000);
+            function cleanup(){ try{ delete window[cbName]; }catch{} try{ s.remove(); }catch{} clearTimeout(t); }
+          } catch (err) { reject(err); }
+        });
+      }
+
+      // ---- Genera ID (server) ----
       async function generateIds() {
         try {
           if (!confirm('Assegnare un ID alle note senza ID?')) return;
@@ -376,70 +410,102 @@
         }
       }
 
-      function jsonp(baseUrl) {
-        return new Promise((resolve, reject) => {
-          try {
-            const url = new URL(baseUrl);
-            const cbName = 'cb_' + Math.random().toString(36).slice(2);
-            url.searchParams.set('callback', cbName);
-            const s = document.createElement('script');
-            let done = false;
-            window[cbName] = (data) => { done = true; cleanup(); resolve(data); };
-            s.src = url.toString();
-            s.onerror = (e) => { cleanup(); reject(e); };
-            document.body.appendChild(s);
-            const t = setTimeout(() => { if (!done) { cleanup(); reject(new Error('JSONP timeout')); } }, 10000);
-            function cleanup(){ try{ delete window[cbName]; }catch{} try{ s.remove(); }catch{} clearTimeout(t); }
-          } catch (err) { reject(err); }
-        });
-      }
-
-      // ---- Link widget logic ----
-      let linkOrigin = null;
+      // ---- Link widget logic (client + persistenza server) ----
+      let linkOrigin = null; // oggetto nota sorgente
 
       function openLinkWidget(item){
+        if (!item || !item.ID) return;
         linkOrigin = item;
-        document.getElementById('linkOverlay').style.display = 'flex';
+        document.getElementById('lwSourceId').textContent = String(item.ID);
+        document.getElementById('lwSearch').value = '';
         renderLinkList();
+        document.getElementById('linkOverlay').style.display = 'flex';
+        setTimeout(()=>document.getElementById('lwSearch').focus(), 0);
         document.getElementById('lwSearch').oninput = renderLinkList;
       }
 
       function closeLinkWidget(){
         document.getElementById('linkOverlay').style.display = 'none';
+        document.getElementById('lwList').innerHTML = '';
+        document.getElementById('lwSelected').innerHTML = '';
+        document.getElementById('lwCount').textContent = '0';
         linkOrigin = null;
       }
 
       function renderLinkList(){
         const q = document.getElementById('lwSearch').value.trim().toLowerCase();
         const list = document.getElementById('lwList');
+        const selectedBox = document.getElementById('lwSelected');
+        const selected = new Set();
+
+        // pre-selezione dagli attuali LinkedIDs della sorgente
+        const pre = String(linkOrigin && linkOrigin.LinkedIDs || '')
+          .split(',').map(s=>s.trim()).filter(Boolean);
+        pre.forEach(id => selected.add(id));
+
         list.innerHTML = '';
         state.notes.forEach(n=>{
-          if(n.ID===linkOrigin.ID) return;
+          const id = String(n.ID || '');
+          if (!id) return;
+          if (linkOrigin && id === String(linkOrigin.ID)) return; // escludi se stesso
+
           const hay = [n.Title,n.Text,n.Tags].map(x=>String(x||'').toLowerCase()).join(' ');
           if(q && !hay.includes(q)) return;
+
+          const checkedAttr = selected.has(id) ? 'checked' : '';
+          const tagsHtml = String(n.Tags||'').split(',')
+            .map(t=>t.trim()).filter(Boolean)
+            .map(t=>`<span class="tag">${escapeHtml(t)}</span>`).join(' ');
+
           const div = document.createElement('div');
           div.className='lw-item';
           div.innerHTML = `
-            <label style="display:flex;gap:6px;align-items:flex-start;">
-              <input type="checkbox" value="${escapeAttr(n.ID||'')}">
+            <label style="display:flex;gap:8px;align-items:flex-start;">
+              <input class="lw-check" type="checkbox" value="${escapeAttr(id)}" ${checkedAttr}>
               <div>
                 <div class="t">${escapeHtml(n.Title||'(senza titolo)')}</div>
                 <div class="m">${escapeHtml(n.Text||'')}</div>
-                <div class="tags">${String(n.Tags||'').split(',').map(t=>`<span class="tag">${escapeHtml(t.trim())}</span>`).join('')}</div>
+                ${tagsHtml ? `<div class="tags" style="margin-top:6px;">${tagsHtml}</div>` : ''}
+                <div class="muted" style="margin-top:6px;">ID: <code>${escapeHtml(id)}</code></div>
               </div>
             </label>`;
           list.appendChild(div);
         });
+
+        updateSelectedPreview();
+        list.addEventListener('change', updateSelectedPreview, { once:true });
       }
 
-      function confirmLink(){
-        const checked=[...document.querySelectorAll('#lwList input[type=checkbox]:checked')]
-          .map(c=>c.value).filter(Boolean);
-        if(linkOrigin){
-          linkOrigin.LinkedIDs = checked.join(',');
-          renderNotes();
+      function updateSelectedPreview(){
+        const boxes = document.querySelectorAll('#lwList .lw-check');
+        const sel = [];
+        boxes.forEach(cb => { if (cb.checked) sel.push(cb.value); });
+        document.getElementById('lwCount').textContent = String(sel.length);
+        const selBox = document.getElementById('lwSelected');
+        selBox.innerHTML = sel.map(id=>`<span class="pill">ID ${escapeHtml(id)}</span>`).join(' ');
+      }
+
+      async function confirmLink(){
+        if (!linkOrigin || !linkOrigin.ID) { closeLinkWidget(); return; }
+        const checked = Array.from(document.querySelectorAll('#lwList .lw-check:checked'))
+          .map(cb => cb.value).filter(Boolean);
+
+        try {
+          const url = new URL(DEFAULT_APPS_URL);
+          url.searchParams.set('mode', 'updateLinks');
+          url.searchParams.set('id', String(linkOrigin.ID));
+          url.searchParams.set('linkedIds', checked.join(','));
+          const res = await jsonp(url.toString());
+          if (!res || res.ok !== true) {
+            alert('Errore nell’aggiornamento link sul server');
+            return;
+          }
+          await loadAll(); // ricarica dallo Sheet per vedere anche i backlink
+          closeLinkWidget();
+        } catch (err) {
+          console.error('confirmLink error', err);
+          alert('Errore di rete durante il salvataggio dei link');
         }
-        closeLinkWidget();
       }
     </script>
   </body>
