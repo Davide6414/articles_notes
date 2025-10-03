@@ -28,13 +28,15 @@
       .group { background:var(--panel); border:1px solid #ccd; border-radius:12px; overflow:hidden; box-shadow:0 2px 6px rgba(0,0,0,0.1); }
       .group:hover { transform:scale(1.02); box-shadow:0 4px 12px rgba(0,0,0,0.15); }
       .group h3 { margin:0; padding:12px; border-bottom:1px solid #dde; font-size:15px; background:var(--accent); color:white; }
-      .item { padding:12px; border-top:1px dashed #ccd; font-size:13px; }
+      .item { padding:12px; border-top:1px dashed #ccd; font-size:13px; display:grid; grid-template-columns: 84px 1fr; gap:10px; align-items:start; }
       .item:first-child { border-top:0; }
       .item a { color:var(--accent2); text-decoration: none; font-weight:600; }
       .item a:hover { text-decoration: underline; }
       .meta { color:var(--muted); font-size:12px; margin-top:4px; }
       .tags { margin-top:6px; display:flex; gap:6px; flex-wrap: wrap; }
       .tag { font-size:11px; color:white; background:var(--accent2); padding:3px 7px; border-radius:10px; }
+      .thumb { width:84px; height:84px; border:1px solid #e5ecf0; border-radius:8px; object-fit:cover; background:#f7fafc; }
+      .noimg { width:84px; height:84px; border:1px dashed #e5ecf0; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:11px; color:#94a3b8; background:#fbfdff; }
 
       /* Link widget */
       .overlay { position:fixed; inset:0; background:rgba(0,0,0,0.45); display:none; align-items:center; justify-content:center; z-index:99999; }
@@ -47,6 +49,7 @@
       .lw-list { margin-top:10px; }
       .lw-item { border-bottom:1px solid #eef3f6; padding:8px; }
       .lw-item:hover { background:#f7fafc; }
+      .lw-row { display:grid; grid-template-columns: 72px 1fr; gap:8px; }
       .lw-item .t { color:#1f2937; font-weight:600; }
       .lw-item .m { color:#6b7280; font-size:12px; margin-top:4px; }
       .lw-actions { display:flex; gap:8px; margin-top:10px; }
@@ -109,7 +112,7 @@
           <button class="btn" id="lwCloseBtn" type="button">Chiudi</button>
         </div>
         <div class="lw-left">
-          <input id="lwSearch" class="lw-search" placeholder="Cerca per titolo, testo o tag…" />
+          <input id="lwSearch" class="lw-search" placeholder="Cerca per titolo, testo, tag o note…" />
           <div id="lwList" class="lw-list"></div>
         </div>
         <div class="lw-right">
@@ -236,7 +239,9 @@
             if (!tags.includes(tagFilter.toLowerCase())) return false;
           }
           if (!search) return true;
-          const hay = [n.Title, n.DOI, n.Text, n.URL, n.Link, n.Tags].map(x => String(x||'').toLowerCase()).join(' ');
+          // include anche Note e ImageLink nel testo ricercabile
+          const hay = [n.Title, n.DOI, n.Text, n.URL, n.Link, n.Tags, n.Note, n.ImageLink]
+            .map(x => String(x||'').toLowerCase()).join(' ');
           return hay.includes(search);
         });
       }
@@ -269,20 +274,35 @@
             const link = String(item.Link || item.URL || '');
             const a = link ? `<a href="${escapeAttr(link)}" target="_blank">Apri</a>` : '';
             const tags = String(item.Tags || '').split(',').map(t => t.trim()).filter(Boolean);
-            const div = document.createElement('div');
-            div.className = 'item';
             const id = String(item.ID || '');
             const linked = String(item.LinkedIDs || '');
+            const noteText = String(item.Note || '');
+            const img = String(item.ImageLink || '');
+
+            const div = document.createElement('div');
+            div.className = 'item';
+
+            const left = img
+              ? `<a href="${escapeAttr(img)}" target="_blank" title="Apri immagine"><img class="thumb" src="${escapeAttr(img)}" alt="img ${escapeAttr(id)}"></a>`
+              : `<div class="noimg">no img</div>`;
+
+            const tagsHtml = tags.length ? `<div class="tags">${tags.map(t=>`<span class="tag">${escapeHtml(t)}</span>`).join('')}</div>` : '';
+            const noteHtml = noteText ? `<div class="meta"><b>Nota:</b> ${escapeHtml(noteText)}</div>` : '';
+
             div.innerHTML = `
-              <div><b>Sezione: ${escapeHtml(String(item.Type || 'Senza tipo'))}</b></div>
-              <div class="meta">DOI: ${escapeHtml(String(item.DOI||''))}</div>
-              <div>${escapeHtml(String(item.Text||''))}</div>
-              ${tags.length ? `<div class="tags">${tags.map(t=>`<span class="tag">${escapeHtml(t)}</span>`).join('')}</div>` : ''}
-              <div class="meta">${a}</div>
-              <div class="meta">ID: <code>${escapeHtml(id || '(manca)')}</code></div>
-              <div class="meta">Linked IDs: ${escapeHtml(linked)}</div>
-              <div class="meta" style="margin-top:8px; display:flex; gap:8px; align-items:center;">
-                <button class="btn" data-open-linker ${id?'':'disabled'}>${id? 'Linka…' : 'Genera ID per abilitare'}</button>
+              ${left}
+              <div>
+                <div><b>Sezione: ${escapeHtml(String(item.Type || 'Senza tipo'))}</b></div>
+                <div class="meta">DOI: ${escapeHtml(String(item.DOI||''))}</div>
+                <div>${escapeHtml(String(item.Text||''))}</div>
+                ${tagsHtml}
+                <div class="meta">${a}</div>
+                ${noteHtml}
+                <div class="meta">ID: <code>${escapeHtml(id || '(manca)')}</code></div>
+                <div class="meta">Linked IDs: ${escapeHtml(linked)}</div>
+                <div class="meta" style="margin-top:8px; display:flex; gap:8px; align-items:center;">
+                  <button class="btn" data-open-linker ${id?'':'disabled'}>${id? 'Linka…' : 'Genera ID per abilitare'}</button>
+                </div>
               </div>
             `;
             const openBtn = div.querySelector('[data-open-linker]');
@@ -313,6 +333,7 @@
             const n = String(item.N||'');
             const div = document.createElement('div');
             div.className = 'item';
+            div.style.gridTemplateColumns = '1fr'; // no thumbnail in data
             div.innerHTML = `
               <div><b>${escapeHtml(val)} ${escapeHtml(unit)}</b> <span class="meta">N=${escapeHtml(n)} mean=${escapeHtml(mean)} sd=${escapeHtml(std)}</span></div>
               <div class="meta">DOI: ${escapeHtml(String(item.DOI||''))}</div>
@@ -333,8 +354,9 @@
         }, {});
       }
 
+      // Aggiorna intestazioni export includendo Note e ImageLink
       const NOTES_HEADERS = [
-        'CreatedAt','URL','Link','Title','DOI','Text','Tags','Type','ClientTimestamp'
+        'CreatedAt','URL','Link','Title','DOI','Text','Tags','Type','ClientTimestamp','ID','LinkedIDs','Note','ImageLink'
       ];
       const DATA_HEADERS = [
         'CreatedAt','DOI','URL','Link','Variable','Value','Unit','N','Mean','StdDev','Notes','ClientTimestamp'
@@ -442,7 +464,6 @@
         if (!item || !item.ID) return;
         linkOrigin = item;
 
-        // inizializza selezione con gli eventuali link già presenti
         linkSelection = new Set(
           String(item.LinkedIDs || '')
             .split(',').map(s=>s.trim()).filter(Boolean)
@@ -473,32 +494,44 @@
         state.notes.forEach(n=>{
           const id = String(n.ID || '');
           if (!id) return;
-          if (linkOrigin && id === String(linkOrigin.ID)) return; // escludi se stesso
+          if (linkOrigin && id === String(linkOrigin.ID)) return;
 
-          const hay = [n.Title,n.Text,n.Tags].map(x=>String(x||'').toLowerCase()).join(' ');
+          // includi anche Note e ImageLink nella ricerca
+          const hay = [n.Title,n.Text,n.Tags,n.Note,n.ImageLink].map(x=>String(x||'').toLowerCase()).join(' ');
           if(q && !hay.includes(q)) return;
 
           const checkedAttr = linkSelection.has(id) ? 'checked' : '';
           const tagsHtml = String(n.Tags||'').split(',')
             .map(t=>t.trim()).filter(Boolean)
             .map(t=>`<span class="tag">${escapeHtml(t)}</span>`).join(' ');
+          const img = String(n.ImageLink || '');
+          const noteText = String(n.Note || '');
+
+          const imgHtml = img
+            ? `<img class="thumb" src="${escapeAttr(img)}" alt="img ${escapeAttr(id)}">`
+            : `<div class="noimg">no img</div>`;
 
           const div = document.createElement('div');
           div.className='lw-item';
           div.innerHTML = `
-            <label style="display:flex;gap:8px;align-items:flex-start;">
-              <input class="lw-check" type="checkbox" value="${escapeAttr(id)}" ${checkedAttr}>
-              <div>
-                <div class="t">${escapeHtml(n.Title||'(senza titolo)')}</div>
-                <div class="m">${escapeHtml(n.Text||'')}</div>
-                ${tagsHtml ? `<div class="tags" style="margin-top:6px;">${tagsHtml}</div>` : ''}
-                <div class="muted" style="margin-top:6px;">ID: <code>${escapeHtml(id)}</code></div>
+            <label class="lw-row">
+              <input class="lw-check" type="checkbox" value="${escapeAttr(id)}" ${checkedAttr} style="grid-column:1; align-self:flex-start; margin-top:4px;">
+              <div style="grid-column:2;">
+                <div style="display:grid; grid-template-columns:72px 1fr; gap:8px;">
+                  <div>${imgHtml}</div>
+                  <div>
+                    <div class="t">${escapeHtml(n.Title||'(senza titolo)')}</div>
+                    <div class="m">${escapeHtml(n.Text||'')}</div>
+                    ${noteText ? `<div class="m"><b>Nota:</b> ${escapeHtml(noteText)}</div>` : ''}
+                    ${tagsHtml ? `<div class="tags" style="margin-top:6px;">${tagsHtml}</div>` : ''}
+                    <div class="muted" style="margin-top:6px;">ID: <code>${escapeHtml(id)}</code></div>
+                  </div>
+                </div>
               </div>
             </label>`;
           list.appendChild(div);
         });
 
-        // delega eventi: aggiorna Set senza perdere stato tra re-render (es. ricerca)
         list.onchange = (e)=>{
           const t = e.target;
           if (t && t.classList && t.classList.contains('lw-check')) {
@@ -536,7 +569,7 @@
             return;
           }
 
-          await loadAll(); // ricarica, include i backlink creati lato server
+          await loadAll();
           closeLinkWidget();
           showToast('Link salvati sul server', 'ok', 3500);
         } catch (err) {
