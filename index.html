@@ -238,8 +238,10 @@
     <header class="header">
       <h1>Article Note Saver - Dashboard</h1>
       <div class="tabs" role="tablist" aria-label="Sezioni">
-        <button id="tabNotes" class="active" role="tab" aria-selected="true" aria-controls="notesPanel">Appunti</button>
-        <button id="tabData" role="tab" aria-selected="false" aria-controls="dataPanel">Dati</button>
+
+                <button id="tabNotes" class="active" role="tab" aria-selected="true" aria-controls="notesPanel">Appunti</button>
+                <button id="openDataPageBtn" type="button" title="Apri pagina dati (nuova scheda)">Dati ↗</button>
+
       </div>
     </header>
 
@@ -256,14 +258,7 @@
         <div id="notesGroups" class="groups" aria-live="polite"></div>
       </section>
 
-      <section id="dataPanel" style="display:none;" role="tabpanel" aria-labelledby="tabData">
-        <div class="filters">
-          <input id="dataSearch" placeholder="Cerca per variabile / DOI" aria-label="Cerca nei dati" />
-          <select id="dataVarFilter" aria-label="Filtra per variabile"><option value="">Tutte le variabili</option></select>
-          <button id="dataExportCsv" title="Esporta i dati filtrati in CSV">Esporta CSV</button>
-        </div>
-        <div id="dataGroups" class="groups" aria-live="polite"></div>
-      </section>
+
     </main>
 
     <!-- Overlay: Widget di linking -->
