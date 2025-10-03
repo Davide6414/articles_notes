@@ -5,41 +5,41 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Article Note Saver - Dashboard</title>
     <style>
-      :root { 
-        --bg:#fdfdfd; 
-        --panel:#ffffff; 
-        --muted:#556b6f; 
-        --text:#1a2b2c; 
-        --accent:#2e8b57; 
-        --accent2:#1e90ff;
-      }
-      * { box-sizing: border-box; transition: all 0.2s ease-in-out; }
+      :root { --bg:#0b0c10; --panel:#15171c; --muted:#9aa0a6; --text:#e8eaed; --accent:#4fc3f7; }
+      * { box-sizing: border-box; }
       body { margin:0; font-family: system-ui, Segoe UI, Roboto, Arial; background:var(--bg); color:var(--text); }
-      .header { padding:20px; border-bottom:2px solid #cde; background:linear-gradient(90deg, var(--accent) 0%, var(--accent2) 100%); color:white; }
-      .header h1 { margin:0; font-size:22px; font-weight:600; }
-      .tabs { display:flex; gap:10px; margin-top:12px; }
-      .tabs button { padding:8px 14px; border-radius:8px; background:#ffffff33; color:#fff; border:1px solid #ffffff55; cursor:pointer; }
-      .tabs button.active { background:#fff; color:var(--accent); font-weight:600; }
-      main { padding:20px; }
-      .filters { display:flex; gap:10px; margin-bottom:14px; flex-wrap: wrap; }
-      .filters input, .filters select { padding:8px; border-radius:6px; border:1px solid #aac; background:#f0f8ff; color:var(--text); }
-      .filters button { padding:8px 14px; border:0; border-radius:6px; background:var(--accent2); color:white; font-weight:600; cursor:pointer; }
-      .groups { display:grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap:16px; }
-      .group { background:var(--panel); border:1px solid #ccd; border-radius:12px; overflow:hidden; box-shadow:0 2px 6px rgba(0,0,0,0.1); }
-      .group:hover { transform:scale(1.02); box-shadow:0 4px 12px rgba(0,0,0,0.15); }
-      .group h3 { margin:0; padding:12px; border-bottom:1px solid #dde; font-size:15px; background:var(--accent); color:white; }
-      .item { padding:12px; border-top:1px dashed #ccd; font-size:13px; }
+      .header { padding:16px; border-bottom:1px solid #222; }
+      .header h1 { margin:0 0 12px; font-size:20px; }
+      .controls { display:flex; gap:8px; align-items:center; margin-bottom:12px; }
+      .controls input { flex:1; padding:8px; border-radius:6px; border:1px solid #333; background:#0f1115; color:var(--text); }
+      .controls button { padding:8px 12px; border:0; border-radius:6px; background:var(--accent); color:#001018; font-weight:600; cursor:pointer; }
+      .tabs { display:flex; gap:8px; }
+      .tabs button { padding:6px 12px; border-radius:6px; background:#0f1115; color:var(--text); border:1px solid #333; cursor:pointer; }
+      .tabs button.active { background:var(--accent); color:#001018; border-color:transparent; }
+      main { padding:16px; }
+      .filters { display:flex; gap:8px; margin-bottom:12px; flex-wrap: wrap; }
+      .filters input, .filters select { padding:8px; border-radius:6px; border:1px solid #333; background:#0f1115; color:var(--text); }
+      .filters button { padding:8px 12px; border:0; border-radius:6px; background:var(--accent); color:#001018; font-weight:600; cursor:pointer; }
+      .groups { display:grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap:12px; }
+      .group { background:var(--panel); border:1px solid #222; border-radius:10px; overflow:hidden; }
+      .group h3 { margin:0; padding:10px 12px; border-bottom:1px solid #222; font-size:14px; background:#0f1115; }
+      .item { padding:10px 12px; border-top:1px dashed #2a2d34; font-size:13px; }
       .item:first-child { border-top:0; }
-      .item a { color:var(--accent2); text-decoration: none; font-weight:600; }
-      .item a:hover { text-decoration: underline; }
+      .item a { color:#88d1ff; text-decoration: none; }
       .meta { color:var(--muted); font-size:12px; margin-top:4px; }
       .tags { margin-top:6px; display:flex; gap:6px; flex-wrap: wrap; }
-      .tag { font-size:11px; color:white; background:var(--accent2); padding:3px 7px; border-radius:10px; }
+      .tag { font-size:11px; color:#001018; background:#8be1ff; padding:2px 6px; border-radius:10px; }
     </style>
   </head>
   <body>
     <header class="header">
       <h1>Article Note Saver - Dashboard</h1>
+      <div class="controls">
+        <label>Apps Script URL</label>
+        <input id="appsUrl" placeholder="https://script.google.com/macros/s/XXX/exec" />
+        <button id="loadBtn">Carica</button>
+        <button id="generateIdsBtn" title="Assegna ID alle note senza ID">Genera ID mancanti</button>
+      </div>
       <div class="tabs">
         <button id="tabNotes" class="active">Appunti</button>
         <button id="tabData">Dati</button>
@@ -74,28 +74,65 @@
     </main>
 
     <script>
+      // Config: aggiorna con la tua URL di Apps Script (stessa usata dall'estensione)
       const DEFAULT_APPS_URL = "https://script.google.com/macros/s/AKfycbyRXsW2jhj_NarPEyX5T8Yqf8U05qrZtPWReMwC9oW4dHTqXegnZhUmCwuYVmMXZ1uX/exec";
 
-      const state = { notes: [], data: [] };
+      const state = {
+        appsUrl: '',
+        notes: [],
+        data: []
+      };
 
       document.addEventListener('DOMContentLoaded', () => {
-        document.getElementById('tabNotes').onclick = () => switchTab('notes');
-        document.getElementById('tabData').onclick = () => switchTab('data');
+        const appsUrlEl = document.getElementById('appsUrl');
+        const loadBtn = document.getElementById('loadBtn');
+        const tabNotes = document.getElementById('tabNotes');
+        const tabData = document.getElementById('tabData');
+        const notesExportBtn = document.getElementById('notesExportCsv');
+        const genIdsBtn = document.getElementById('generateIdsBtn');
+        const dataExportBtn = document.getElementById('dataExportCsv');
 
+        appsUrlEl.value = localStorage.getItem('appsUrl') || DEFAULT_APPS_URL;
+        state.appsUrl = appsUrlEl.value;
+
+        loadBtn.onclick = async () => {
+          state.appsUrl = appsUrlEl.value.trim();
+          localStorage.setItem('appsUrl', state.appsUrl);
+          await loadAll();
+        };
+        genIdsBtn.onclick = async () => {
+          try {
+            const res = await fetch(state.appsUrl, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json; charset=UTF-8' },
+              body: JSON.stringify({ mode: 'assignIds' })
+            });
+            const txt = await res.text();
+            alert('Assegnazione ID completata: ' + txt);
+            await loadAll();
+          } catch (e) {
+            console.error(e);
+            alert('Errore durante assegnazione ID');
+          }
+        };
+        tabNotes.onclick = () => switchTab('notes');
+        tabData.onclick = () => switchTab('data');
+
+        // Filters
         document.getElementById('notesSearch').oninput = renderNotes;
         document.getElementById('notesTypeFilter').onchange = renderNotes;
         document.getElementById('notesTagFilter').onchange = renderNotes;
         document.getElementById('dataSearch').oninput = renderData;
         document.getElementById('dataVarFilter').onchange = renderData;
-        document.getElementById('notesExportCsv').onclick = exportNotesCsv;
-        document.getElementById('dataExportCsv').onclick = exportDataCsv;
+        notesExportBtn.onclick = exportNotesCsv;
+        dataExportBtn.onclick = exportDataCsv;
 
         loadAll();
       });
 
       async function loadAll() {
         try {
-          const url = new URL(DEFAULT_APPS_URL);
+          const url = new URL(state.appsUrl);
           url.searchParams.set('mode', 'all');
           const res = await fetch(url.toString());
           const json = await res.json();
@@ -106,7 +143,7 @@
           renderData();
         } catch (e) {
           console.error('Errore caricamento dati:', e);
-          alert('Errore nel recupero dati dal server.');
+          alert('Errore nel recupero dati. Verifica la URL di Apps Script.');
         }
       }
 
@@ -129,12 +166,14 @@
       }
 
       function populateFilters() {
+        // Types for notes
         const typeSet = new Set();
         state.notes.forEach(n => { if (n.Type) typeSet.add(String(n.Type)); });
         const typeSel = document.getElementById('notesTypeFilter');
         typeSel.innerHTML = '<option value="">Tutti i type</option>' +
           Array.from(typeSet).sort().map(t => `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join('');
 
+        // Tags for notes
         const tagSet = new Set();
         state.notes.forEach(n => {
           const raw = String(n.Tags || '').split(',');
@@ -144,6 +183,7 @@
         tagSel.innerHTML = '<option value="">Tutti i tag</option>' +
           Array.from(tagSet).sort((a,b)=>a.localeCompare(b,'it',{sensitivity:'base'})).map(t => `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join('');
 
+        // Variables for data
         const varSet = new Set();
         state.data.forEach(d => { if (d.Variable) varSet.add(String(d.Variable)); });
         const varSel = document.getElementById('dataVarFilter');
@@ -180,33 +220,53 @@
 
       function renderNotes() {
         const filtered = getFilteredNotes();
-        const groups = groupBy(filtered, x => String(x.DOI || 'Senza DOI'));
+        const groups = groupBy(filtered, x => String(x.Type || 'Senza tipo'));
         const container = document.getElementById('notesGroups');
         container.innerHTML = '';
-
-        Object.keys(groups).sort().forEach(doi => {
-          const items = groups[doi];
-          const title = items[0].Title || doi || 'Senza titolo';
+        Object.keys(groups).sort().forEach(type => {
           const box = document.createElement('div');
           box.className = 'group';
-          box.innerHTML = `<h3>${escapeHtml(title)} <span class="meta">(${items.length})</span></h3>`;
-
-          items.forEach(item => {
+          box.innerHTML = `<h3>${escapeHtml(type)} <span class="meta">(${groups[type].length})</span></h3>`;
+          groups[type].forEach(item => {
             const link = String(item.Link || item.URL || '');
             const a = link ? `<a href="${escapeAttr(link)}" target="_blank">Apri</a>` : '';
-            const tags = String(item.Tags || '').split(',').map(t => t.trim()).filter(Boolean);
             const div = document.createElement('div');
+            const tags = String(item.Tags || '').split(',').map(t => t.trim()).filter(Boolean);
             div.className = 'item';
+            const id = String(item.ID || '');
+            const linked = String(item.LinkedIDs || '');
             div.innerHTML = `
-              <div><b>Sezione: ${escapeHtml(String(item.Type || 'Senza tipo'))}</b></div>
+              <div><b>${escapeHtml(String(item.Title||''))}</b></div>
               <div class="meta">DOI: ${escapeHtml(String(item.DOI||''))}</div>
               <div>${escapeHtml(String(item.Text||''))}</div>
-              ${tags.length ? `<div class="tags">${tags.map(t=>`<span class="tag">${escapeHtml(t)}</span>`).join('')}</div>` : ''}
+              ${tags.length ? `<div class="tags">${tags.map(t=>`<span class=\"tag\">${escapeHtml(t)}</span>`).join('')}</div>` : ''}
               <div class="meta">${a}</div>
+              <div class="meta">ID: <code>${escapeHtml(id)}</code> <button data-copy-id>copia</button></div>
+              <div class="meta">Linked IDs:</div>
+              <div style="display:flex; gap:6px; align-items:center; margin-top:6px;">
+                <input data-linked style="flex:1; padding:6px; border-radius:6px; border:1px solid #333; background:#0f1115; color:var(--text);" value="${escapeAttr(linked)}" placeholder="uuid1, uuid2" />
+                <button data-save-links>Salva</button>
+              </div>
             `;
+            // wire actions
+            const copyBtn = div.querySelector('[data-copy-id]');
+            if (copyBtn) copyBtn.onclick = async () => { try { await navigator.clipboard.writeText(id); copyBtn.textContent='copiato'; setTimeout(()=>copyBtn.textContent='copia',1200);} catch(e){} };
+            const input = div.querySelector('[data-linked]');
+            const saveBtn = div.querySelector('[data-save-links]');
+            if (saveBtn) saveBtn.onclick = async () => {
+              try {
+                const body = { mode: 'updateLinks', id, linkedIds: input.value };
+                const res = await fetch(state.appsUrl, { method:'POST', headers:{'Content-Type':'application/json; charset=UTF-8'}, body: JSON.stringify(body)});
+                const txt = await res.text();
+                console.log('Update links:', txt);
+                await loadAll();
+              } catch (e) {
+                console.error('Errore update links', e);
+                alert('Errore salvataggio collegamenti');
+              }
+            };
             box.appendChild(div);
           });
-
           container.appendChild(box);
         });
       }
@@ -250,8 +310,9 @@
         }, {});
       }
 
+      // --- Export CSV ---
       const NOTES_HEADERS = [
-        'CreatedAt','URL','Link','Title','DOI','Text','Tags','Type','ClientTimestamp'
+        'CreatedAt','URL','Link','Title','DOI','Text','Tags','Type','ClientTimestamp','ID','LinkedIDs'
       ];
       const DATA_HEADERS = [
         'CreatedAt','DOI','URL','Link','Variable','Value','Unit','N','Mean','StdDev','Notes','ClientTimestamp'
@@ -303,4 +364,4 @@
       }
     </script>
   </body>
-</html>
+  </html>
