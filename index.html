@@ -119,14 +119,34 @@
         height:100%;                  /* riempi la cella */
       }
       .note-card:hover{ transform:translateY(-2px); box-shadow:0 8px 22px rgba(0,0,0,.09); }
-      .note-card .thumb,
-      .note-card .noimg{ width:100%; height:140px; border-radius:0; margin:0; }
-      .note-card .noimg{ border-style:dashed; display:flex;align-items:center;justify-content:center;color:#94a3b8;background:#f8fafc }
-      .note-card .card-body{ padding:12px; display:flex; flex-direction:column; gap:6px; flex:1; }
-      .note-card .title-row{ font-size:14px; font-weight:700; line-height:1.25 }
-      .note-card .type{ font-size:11px; font-weight:800; color:#2563eb; text-transform:uppercase; letter-spacing:.3px }
+      .note-card .thumb{ width:100%; height:140px; border-radius:0; margin:0; }
+      .note-card .card-body{ padding:12px; display:flex; flex-direction:column; gap:8px; flex:1; }
+      .note-card .title-row{ font-size:14px; font-weight:800; line-height:1.25 }
+      .note-card { 
+        border-left:4px solid var(--type-color, var(--border-strong));
+        background:
+          linear-gradient(0deg, var(--type-bg, transparent), var(--type-bg, transparent)),
+          #fff;
+      }
+      .note-card .type{ 
+        font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.3px;
+        color: var(--type-color, #2563eb);
+        background: var(--type-pill-bg, #eef6ff);
+        border: 1px solid var(--type-color, #2563eb);
+        padding: 2px 6px; border-radius: 9999px;
+      }
       .note-card .meta{ color:#6b7280; font-size:12px }
       .note-card .fulltext{ font-size:13px; color:#0f172a }
+      .note-card .note-box{
+        background: var(--type-pill-bg, #eef6ff);
+        border: 1px solid var(--type-color, #93c5fd);
+        border-left-width: 4px;
+        padding: 8px 10px; border-radius: 10px; color:#0b1220;
+      }
+      .note-card .text-box{
+        background:#f8fafc; border:1px solid var(--border);
+        padding:8px 10px; border-radius:10px;
+      }
       .note-card .tags{ display:flex; gap:6px; flex-wrap:wrap }
       .note-card .tag{ font-size:11px; color:#0b1220; background:#ecfeff; padding:3px 8px; border-radius:999px; border:1px solid #bae6fd }
       .note-card .actions-row{ margin:0 12px 12px; display:flex; gap:8px; flex-wrap:wrap }
@@ -163,8 +183,9 @@
         width: min(880px, 96vw); max-height: min(86vh, 900px);
         overflow: auto; background: #fff; border-radius: 16px;
         box-shadow: 0 14px 40px rgba(2, 6, 23, .36); padding: 18px;
+        border-top: 6px solid var(--type-color, var(--accent));
       }
-      .sheet .hd { display: flex; gap: 12px; align-items: center; margin-bottom: 10px; }
+      .sheet .hd { display: flex; gap: 12px; align-items: center; margin-bottom: 10px; padding-bottom: 8px; border-bottom:1px solid var(--border); }
       .sheet .hd b { flex: 1; font-size: 18px; }
       .sheet .grid { display: grid; grid-template-columns: 160px 1fr; gap: 10px; }
       .kv .k { font-weight: 800; color: #0b1220; }
@@ -173,6 +194,9 @@
         width: 100%; max-height: 320px; object-fit: cover; border-radius: 12px; border: 1px solid var(--border);
         background: #f7fafc; margin-bottom: 10px;
       }
+      /* Evidenza in dettaglio */
+      #detNote{ background: var(--type-pill-bg, #eef6ff); border:1px solid var(--type-color, #93c5fd); border-left-width:4px; padding:8px 10px; border-radius:10px; }
+      #detText{ background:#f8fafc; border:1px solid var(--border); padding:10px 12px; border-radius:12px; white-space:pre-wrap; }
 
       /* Link widget */
       .link-widget {
@@ -266,6 +290,7 @@
       <div class="sheet">
         <div class="hd">
           <b id="detTitle">(titolo)</b>
+          <span id="detTypePill" class="pill" style="border-color:var(--type-color); background:var(--type-pill-bg);"></span>
           <button class="btn" id="detCloseBtn" type="button">Chiudi</button>
         </div>
         <div id="detBody">
@@ -402,6 +427,14 @@
 
           const grid=document.createElement('div'); grid.className='items-grid';
 
+          // Ordina le note per Type per raggruppare visivamente colori simili
+          items.sort((a,b)=>{
+            const ta=String(a.Type||'').toLowerCase();
+            const tb=String(b.Type||'').toLowerCase();
+            if(ta<tb) return -1; if(ta>tb) return 1;
+            return String(a.ID||'').localeCompare(String(b.ID||''));
+          });
+
           items.forEach(item=>{
             const id=String(item.ID||''); const linked=String(item.LinkedIDs||'');
             const tags=String(item.Tags||'').split(',').map(t=>t.trim()).filter(Boolean);
@@ -414,19 +447,18 @@
 
             const imgHtml = img
               ? `<img class="thumb" src="${escapeAttr(img)}" alt="img ${escapeAttr(id)}">`
-              : `<div class="noimg">no img</div>`;
+              : ``;
 
             card.innerHTML = `
               ${imgHtml}
               <div class="card-body">
                 <div class="title-row">
                   <span class="type">${escapeHtml(String(item.Type||'SENZA TIPO'))}</span>
-                  <span> — ${escapeHtml(item.Title||'(senza titolo)')}</span>
                 </div>
                 <div class="meta">DOI: ${escapeHtml(String(item.DOI||''))}</div>
-                <div class="fulltext clamp-3">${escapeHtml(String(item.Text||''))}</div>
+                ${noteText?`<div class=\"note-box\">${escapeHtml(noteText)}</div>`:''}
+                <div class="fulltext clamp-3 text-box">${escapeHtml(String(item.Text||''))}</div>
                 ${tags.length?`<div class="tags">${tags.map(t=>`<span class="tag">${escapeHtml(t)}</span>`).join('')}</div>`:''}
-                ${noteText?`<div class="meta"><b>Nota:</b> ${escapeHtml(noteText)}</div>`:''}
                 <div class="linkwrap meta">${link?`<a href="${escapeAttr(link)}" target="_blank" rel="noopener">Apri sorgente</a>`:''}</div>
                 <div class="ids meta">ID: <code>${escapeHtml(id||'(manca)')}</code> · Linked: ${escapeHtml(linked)}</div>
               </div>
@@ -434,12 +466,20 @@
                 <button class="btn" data-open-linker ${id?'':'disabled'}>${id?'Linka…':'Genera ID per abilitare'}</button>
                 ${id?`<a class="btn" href="linked.html?id=${encodeURIComponent(id)}" target="_blank" rel="noopener">Visualizza linked</a>`:`<button class="btn" disabled>Visualizza linked</button>`}
                 ${id?`<button class="btn" data-details="${escapeAttr(id)}">Dettagli</button>`:`<button class="btn" disabled>Dettagli</button>`}
-                ${id?`<button class="btn" data-collapse="${escapeAttr(id)}">${(collapsed.has(id)||collapseAll)?'Espandi':'Compatta'}</button>`:`<button class="btn" disabled>Compatta</button>`}
+               ${id?`<button class="btn" data-collapse="${escapeAttr(id)}">${(collapsed.has(id)||collapseAll)?'Espandi':'Compatta'}</button>`:`<button class="btn" disabled>Compatta</button>`}
               </div>`;
 
-            const openBtn=card.querySelector('[data-open-linker]'); if(openBtn) openBtn.onclick=()=>openLinkWidget(item);
-            const detBtn =card.querySelector('[data-details]');   if(detBtn)  detBtn.onclick=()=>openDetail(item);
-            const colBtn =card.querySelector('[data-collapse]');  if(colBtn)  colBtn.onclick=(e)=>toggleCollapsed(id,e.currentTarget,card);
+             const openBtn=card.querySelector('[data-open-linker]'); if(openBtn) openBtn.onclick=()=>openLinkWidget(item);
+             const detBtn =card.querySelector('[data-details]');   if(detBtn)  detBtn.onclick=()=>openDetail(item);
+             const colBtn =card.querySelector('[data-collapse]');  if(colBtn)  colBtn.onclick=(e)=>toggleCollapsed(id,e.currentTarget,card);
+
+            // Colori per-type (HSL) applicati via CSS variables
+            try{
+              const tCol = typeColor(item.Type||'');
+              card.style.setProperty('--type-color', tCol.solid);
+              card.style.setProperty('--type-bg', tCol.bg);
+              card.style.setProperty('--type-pill-bg', tCol.pillBg);
+            }catch{}
 
             grid.appendChild(card);
           });
@@ -503,6 +543,7 @@
         document.getElementById('detId').textContent    = String(item.ID||'');
         document.getElementById('detDoi').textContent   = String(item.DOI||'');
         document.getElementById('detType').textContent  = String(item.Type||'');
+        const pill = document.getElementById('detTypePill'); if(pill) pill.textContent = String(item.Type||'');
         document.getElementById('detTags').textContent  = String(item.Tags||'');
         document.getElementById('detNote').textContent  = String(item.Note||'');
         document.getElementById('detText').textContent  = String(item.Text||'');
@@ -511,6 +552,14 @@
         const img = String(item.ImageLink||'');
         const imgEl = document.getElementById('detImg');
         if(img){ imgEl.src=img; imgEl.style.display='block'; imgEl.alt='Immagine '+String(item.ID||''); } else { imgEl.removeAttribute('src'); imgEl.style.display='none'; }
+        try{
+          const col = typeColor(item.Type||'');
+          const sheet = document.querySelector('#detailOverlay .sheet');
+          if(sheet){
+            sheet.style.setProperty('--type-color', col.solid);
+            sheet.style.setProperty('--type-pill-bg', col.pillBg);
+          }
+        }catch{}
         document.getElementById('detailOverlay').style.display='flex';
       }
       function closeDetail(){ document.getElementById('detailOverlay').style.display='none'; }
@@ -537,6 +586,23 @@
       function timestamp(){ const d=new Date(); const pad=n=>String(n).padStart(2,'0'); return `${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`; }
       function escapeHtml(str){ return String(str).replace(/[&<>"']/g,s=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s])); }
       function escapeAttr(str){ return escapeHtml(str).replace(/"/g,'&quot;'); }
+
+      // Color ramp per Type: hash -> hue, poi HSL
+      function hashHue(str){
+        const s=String(str||'').toLowerCase();
+        let h=0>>>0; // uint32
+        for(let i=0;i<s.length;i++){ h = (h*31 + s.charCodeAt(i)) >>> 0; }
+        return h % 360;
+      }
+      function typeColor(type){
+        const h=hashHue(type);
+        return {
+          hue: h,
+          solid: `hsl(${h}, 70%, 45%)`,
+          bg: `hsl(${h}, 85%, 96%)`,
+          pillBg: `hsl(${h}, 95%, 92%)`
+        };
+      }
 
       function jsonp(baseUrl){
         return new Promise((resolve,reject)=>{
@@ -588,7 +654,7 @@
           if(q && !hay.includes(q)) return;
           const checked=linkSelection.has(id)?'checked':'';
           const tagsHtml=String(n.Tags||'').split(',').map(t=>t.trim()).filter(Boolean).map(t=>`<span class="tag">${escapeHtml(t)}</span>`).join(' ');
-          const img=String(n.ImageLink||''); const imgHtml=img?`<img class="thumb" src="${escapeAttr(img)}" alt="img ${escapeAttr(id)}">`:`<div class="noimg">no img</div>`;
+          const img=String(n.ImageLink||''); const imgHtml=img?`<img class="thumb" src="${escapeAttr(img)}" alt="img ${escapeAttr(id)}">`:``;
           const div=document.createElement('div'); div.className='lw-item';
           div.innerHTML=`
             <label style="display:grid;grid-template-columns:24px 96px 1fr;gap:10px;align-items:flex-start;">
