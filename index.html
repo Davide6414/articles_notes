@@ -16,234 +16,107 @@
         --border: #e5e7eb;
         --border-strong: #cbd5e1;
       }
-
       * { box-sizing: border-box; transition: all .18s ease; }
-      html, body { height: 100%; }
+      html, body { height: 100%; margin:0; }
       body {
-        margin: 0;
         font-family: system-ui, Segoe UI, Roboto, Arial, sans-serif;
         background: radial-gradient(1200px 800px at 20% -10%, #eef2ff 0%, #f8fafc 40%, var(--bg) 100%);
-        color: var(--text);
-        line-height: 1.55;
-        letter-spacing: .1px;
+        color: var(--text); line-height: 1.55;
       }
       :focus-visible { outline: 3px solid var(--ring); outline-offset: 2px; border-radius: 10px; }
 
-      /* Header */
       .header {
         padding: 22px;
         border-bottom: 1px solid #dbeafe;
-        background:
-          linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,0)) 0 0/100% 100%,
-          linear-gradient(90deg, var(--accent) 0%, var(--accent2) 100%);
+        background: linear-gradient(90deg, var(--accent) 0%, var(--accent2) 100%);
         color: #fff;
       }
-      .header h1 { margin: 0; font-size: 24px; font-weight: 800; letter-spacing: .2px; }
-      .tabs { display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
-      .tabs button {
-        padding: 10px 16px; border-radius: 999px; background: #ffffff2b;
-        color: #fff; border: 1px solid #ffffff55; cursor: pointer; font-size: 14px; backdrop-filter: blur(2px);
-      }
-      .tabs button:hover { background: #ffffff45; }
-      .tabs button.active { background: #fff; color: var(--accent); font-weight: 700; }
+      .header h1 { margin:0; font-size:24px; font-weight:800; }
+      .tabs{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;}
+      .tabs button{padding:10px 16px;border-radius:999px;background:#ffffff2b;color:#fff;border:1px solid #ffffff55;cursor:pointer;font-size:14px;}
+      .tabs button.active{background:#fff;color:var(--accent);font-weight:700;}
 
-      /* Full-width content: ogni articolo occupa una banda orizzontale */
-      main { padding: 24px 28px; max-width: none; margin: 0; }
+      main { padding:24px 28px; }
 
-      /* Filters */
-      .filters {
-        display: grid;
-        grid-template-columns: 1fr repeat(2, minmax(180px, 240px)) auto auto auto;
-        gap: 12px;
-        margin-bottom: 20px;
-      }
-      @media (max-width: 980px) { .filters { grid-template-columns: 1fr 1fr; } }
-      .filters input, .filters select {
-        padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border);
-        background: #ffffff; color: var(--text); font-size: 14px; box-shadow: 0 1px 0 rgba(0,0,0,.02);
-      }
-      .filters input::placeholder { color: #94a3b8; }
-      .filters button {
-        padding: 10px 14px; border: 1px solid var(--border-strong); border-radius: 10px;
-        background: #fff; color: var(--text); font-weight: 600; cursor: pointer; font-size: 14px;
-      }
-      .filters button:hover { background: #f3f4f6; }
-      .filters #notesExportCsv, .filters #dataExportCsv { background: var(--accent); border-color: var(--accent); color: #fff; }
-      .filters #notesExportCsv:hover, .filters #dataExportCsv:hover { background: #1d4ed8; }
+      .filters{display:grid;grid-template-columns:1fr repeat(2,minmax(180px,240px)) auto auto auto;gap:12px;margin-bottom:20px;}
+      .filters input,.filters select{padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:#fff;font-size:14px;}
+      .filters button{padding:10px 14px;border-radius:10px;border:1px solid var(--border-strong);background:#fff;font-weight:600;cursor:pointer;}
+      .filters #notesExportCsv,.filters #dataExportCsv{background:var(--accent);border-color:var(--accent);color:#fff;}
 
-      /* BANDS: ogni .group è una banda piena larghezza; dentro, griglia uniforme di note */
-      .groups {
-        display: flex;
-        flex-direction: column;     
-        gap: 22px;
-        width: 100%;
-      }
-      .group {
-        width: 100%;
-        background: var(--panel);
-        border: 1px solid var(--border);
-        border-radius: 16px;
-        overflow: hidden;
-        box-shadow: 0 1px 0 rgba(15,23,42,0.02), 0 10px 24px -18px rgba(2,6,23,0.3);
-      }
-      .group:hover { transform: translateY(-2px); box-shadow: 0 14px 30px -14px rgba(2,6,23,.35); }
-      .group h3 {
-        margin: 0; padding: 14px 16px; border-bottom: 1px solid var(--border);
-        font-size: 16px; font-weight: 700;
-        background: linear-gradient(90deg, var(--accent) 0%, var(--accent2) 100%);
-        color: #fff; display: flex; gap: 8px; align-items: center; justify-content: space-between;
-      }
-      .group h3 .meta {
-        font-weight: 600; opacity: .95; font-size: 12px; padding: 2px 8px;
-        background: #ffffff2b; border: 1px solid #ffffff55; border-radius: 999px;
-      }
+      .groups{display:flex;flex-direction:column;gap:22px;}
+      .group{background:#fff;border:1px solid var(--border);border-radius:16px;overflow:hidden;box-shadow:0 1px 0 rgba(15,23,42,0.02),0 10px 24px -18px rgba(2,6,23,0.3);}
+      .group h3{margin:0;padding:14px 16px;border-bottom:1px solid var(--border);font-size:16px;font-weight:700;background:linear-gradient(90deg,var(--accent)0%,var(--accent2)100%);color:#fff;display:flex;justify-content:space-between;align-items:center;}
+      .group h3 .meta{font-weight:600;font-size:12px;padding:2px 8px;background:#ffffff2b;border-radius:999px;}
 
-      .items-grid{
-        display:grid;
-        grid-template-columns:repeat(auto-fill,minmax(260px,1fr));
-        grid-auto-rows: 1fr;          
-        gap:14px;
-        padding:12px;
-        align-items: stretch;         
-      }
+      .items-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;padding:12px;}
+      .note-card{background:#fff;border:1px solid #e5e7eb;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.06);overflow:hidden;display:flex;flex-direction:column;}
+      .note-card .thumb{width:100%;height:140px;object-fit:cover;}
+      .note-card .card-body{padding:12px;display:flex;flex-direction:column;gap:6px;flex:1;}
+      .note-card .type{font-size:12px;font-weight:800;padding:3px 6px;border-radius:6px;color:#fff;display:inline-block}
+      .note-card .fulltext{font-size:15px;line-height:1.4}
+      .note-card .note-highlight{background:#fff8c5;padding:6px 8px;border-radius:8px;font-size:15px;font-weight:500;}
+      .note-card .tags{display:flex;gap:6px;flex-wrap:wrap}
+      .note-card .tag{font-size:11px;background:#ecfeff;padding:3px 8px;border-radius:999px;border:1px solid #bae6fd}
+      .actions-row{margin:0 12px 12px;display:flex;gap:8px;flex-wrap:wrap}
+      .btn{padding:8px 14px;border-radius:10px;border:1px solid var(--border-strong);background:#fff;cursor:pointer;font-size:13px;font-weight:600;}
+      .btn.primary{background:var(--accent);color:#fff;border-color:var(--accent);}
 
-      .note-card{
-        background:#fff;
-        border:1px solid #e5e7eb;
-        border-radius:12px;
-        box-shadow:0 2px 8px rgba(0,0,0,.06);
-        overflow:hidden;
-        display:flex;
-        flex-direction:column;
-        height:100%;                  
-      }
-      .note-card:hover{ transform:translateY(-2px); box-shadow:0 8px 22px rgba(0,0,0,.09); }
-      .note-card .thumb{ width:100%; height:140px; border-radius:0; margin:0; object-fit:cover }
-      .note-card .card-body{ padding:12px; display:flex; flex-direction:column; gap:6px; flex:1; }
-      .note-card .type{ font-size:12px; font-weight:800; padding:3px 6px; border-radius:6px; color:#fff; display:inline-block }
-      .note-card .fulltext{ font-size:15px; color:#0f172a; line-height:1.4 }
-      .note-card .note-highlight{ background:#fff8c5; padding:6px 8px; border-radius:8px; font-size:15px; font-weight:500; }
-      .note-card .tags{ display:flex; gap:6px; flex-wrap:wrap }
-      .note-card .tag{ font-size:11px; color:#0b1220; background:#ecfeff; padding:3px 8px; border-radius:999px; border:1px solid #bae6fd }
-      .note-card .actions-row{ margin:0 12px 12px; display:flex; gap:8px; flex-wrap:wrap }
-      .note-card .btn{ padding:6px 10px; font-size:12px; border-radius:8px; border:1px solid #d1d5db; background:#fff; cursor:pointer }
-      .note-card .btn:hover{ background:#f3f4f6 }
-      .note-card .btn.primary{ background:#2563eb; color:#fff; border-color:#2563eb }
-      .note-card.collapsed .fulltext,
-      .note-card.collapsed .linkwrap,
-      .note-card.collapsed .note-highlight { display:none }
-
-      .clamp-2 { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
-      .clamp-3 { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; }
-
-      .linkwrap a { color: #0ea5e9; text-decoration: none; font-weight: 700; }
-      .linkwrap a:hover { text-decoration: underline; }
-
-      .btn {
-        padding: 8px 14px; border-radius: 10px; border: 1px solid var(--border-strong);
-        background: #fff; cursor: pointer; font-size: 13px; font-weight: 600;
-      }
-      .btn:hover { background: #f3f4f6; }
-      .btn[disabled] { opacity: .5; cursor: not-allowed; }
-      .btn.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
-      .btn.primary:hover { background: #1d4ed8; }
-
-      /* Overlay */
-      .overlay {
-        position: fixed; inset: 0; background: rgba(2,6,23,.52);
-        display: none; align-items: center; justify-content: center; z-index: 99999;
-      }
-      .sheet {
-        width: min(880px, 96vw); max-height: min(86vh, 900px);
-        overflow: auto; background: #fff; border-radius: 16px;
-        box-shadow: 0 14px 40px rgba(2, 6, 23, .36); padding: 18px;
-      }
-      .sheet .hd { display: flex; gap: 12px; align-items: center; margin-bottom: 10px; }
-      .sheet .hd b { flex: 1; font-size: 18px; }
-      .sheet .grid { display: grid; grid-template-columns: 160px 1fr; gap: 10px; }
-      .kv .k { font-weight: 800; color: #0b1220; }
-      .kv .v { color: #1f2937; }
-      .imgwide {
-        width: 100%; max-height: 320px; object-fit: cover; border-radius: 12px; border: 1px solid var(--border);
-        background: #f7fafc; margin-bottom: 10px;
-      }
-
-      /* Toast */
-      .toast-container { position: fixed; top: 16px; right: 16px; display: flex; flex-direction: column; gap: 8px; z-index: 100000; }
-      .toast {
-        min-width: 260px; max-width: 380px; background: #fff; border: 1px solid var(--border-strong);
-        border-left: 6px solid var(--accent); box-shadow: 0 6px 20px rgba(2,6,23,.18);
-        padding: 12px 14px; border-radius: 12px; font-size: 14px; color: var(--text);
-      }
-      .toast.ok  { border-left-color: #16a34a; }
-      .toast.err { border-left-color: #dc2626; }
-      .toast.info{ border-left-color: var(--accent); }
+      .overlay{position:fixed;inset:0;background:rgba(2,6,23,.52);display:none;align-items:center;justify-content:center;z-index:9999;}
+      .sheet{width:min(880px,96vw);max-height:min(86vh,900px);overflow:auto;background:#fff;border-radius:16px;box-shadow:0 14px 40px rgba(2,6,23,.36);padding:18px;}
     </style>
   </head>
   <body>
     <header class="header">
       <h1>Article Note Saver - Dashboard</h1>
-      <div class="tabs" role="tablist" aria-label="Sezioni">
-        <button id="tabNotes" class="active" role="tab" aria-selected="true" aria-controls="notesPanel">Appunti</button>
-        <button id="tabData" role="tab" aria-selected="false" aria-controls="dataPanel">Dati</button>
+      <div class="tabs">
+        <button id="tabNotes" class="active">Appunti</button>
+        <button id="tabData">Dati</button>
       </div>
     </header>
 
     <main>
-      <section id="notesPanel" role="tabpanel" aria-labelledby="tabNotes">
+      <section id="notesPanel">
         <div class="filters">
-          <input id="notesSearch" placeholder="Cerca testo / titolo / DOI" aria-label="Cerca nelle note" />
-          <select id="notesTypeFilter" aria-label="Filtra per Type"><option value="">Tutti i type</option></select>
-          <select id="notesTagFilter" aria-label="Filtra per Tag"><option value="">Tutti i tag</option></select>
-          <button id="notesExportCsv" title="Esporta gli appunti filtrati in CSV">Esporta CSV</button>
-          <button id="generateIdsBtn" title="Assegna ID alle note senza ID">Genera ID</button>
-          <button id="toggleAllCollapseBtn" title="Compatta/Espandi tutte">Toggle tutti</button>
+          <input id="notesSearch" placeholder="Cerca testo / titolo" />
+          <select id="notesTypeFilter"><option value="">Tutti i type</option></select>
+          <select id="notesTagFilter"><option value="">Tutti i tag</option></select>
+          <button id="notesExportCsv">Esporta CSV</button>
+          <button id="toggleAllCollapseBtn">Toggle tutti</button>
         </div>
-        <div id="notesGroups" class="groups" aria-live="polite"></div>
+        <div id="notesGroups" class="groups"></div>
       </section>
 
-      <section id="dataPanel" style="display:none;" role="tabpanel" aria-labelledby="tabData">
+      <section id="dataPanel" style="display:none;">
         <div class="filters">
-          <input id="dataSearch" placeholder="Cerca per variabile / DOI" aria-label="Cerca nei dati" />
-          <select id="dataVarFilter" aria-label="Filtra per variabile"><option value="">Tutte le variabili</option></select>
-          <button id="dataExportCsv" title="Esporta i dati filtrati in CSV">Esporta CSV</button>
+          <input id="dataSearch" placeholder="Cerca per variabile" />
+          <select id="dataVarFilter"><option value="">Tutte le variabili</option></select>
+          <button id="dataExportCsv">Esporta CSV</button>
         </div>
-        <div id="dataGroups" class="groups" aria-live="polite"></div>
+        <div id="dataGroups" class="groups"></div>
       </section>
     </main>
 
-    <!-- Overlay: Dettaglio singola nota -->
-    <div id="detailOverlay" class="overlay" role="dialog" aria-modal="true" aria-label="Dettagli nota">
+    <div id="detailOverlay" class="overlay">
       <div class="sheet">
         <div class="hd">
           <b id="detTitle">(titolo)</b>
-          <button class="btn" id="detCloseBtn" type="button">Chiudi</button>
+          <button class="btn" id="detCloseBtn">Chiudi</button>
         </div>
-        <div id="detBody">
-          <img id="detImg" class="imgwide" alt="" style="display:none">
-          <div class="grid" style="margin-top:10px">
-            <div class="kv k">DOI</div><div class="kv v" id="detDoi"></div>
-            <div class="kv k">Type</div><div class="kv v" id="detType"></div>
-            <div class="kv k">Tags</div><div class="kv v" id="detTags"></div>
-            <div class="kv k">Nota</div><div class="kv v" id="detNote"></div>
-            <div class="kv k">Link</div><div class="kv v" id="detLink"></div>
-          </div>
-          <div style="margin-top:12px">
-            <div class="kv k">Testo</div>
-            <div class="kv v" id="detText" style="margin-top:6px;font-size:15px;line-height:1.4"></div>
-          </div>
-        </div>
+        <div id="detBody"></div>
       </div>
     </div>
-
-    <!-- Toast container -->
-    <div id="toastContainer" class="toast-container" aria-live="polite" aria-atomic="true"></div>
 
     <script>
       const DEFAULT_APPS_URL="https://script.google.com/macros/s/AKfycbyRXsW2jhj_NarPEyX5T8Yqf8U05qrZtPWReMwC9oW4dHTqXegnZhUmCwuYVmMXZ1uX/exec";
       const state={ notes:[], data:[] };
-      const collapsed = new Set();
-      let collapseAll=false;
+      const collapsed=new Set(); let collapseAll=false;
+      const typeColors=new Map();
+      function getTypeColor(type){
+        if(typeColors.has(type)) return typeColors.get(type);
+        const hue=Math.floor(Math.random()*360);
+        const color=`hsl(${hue},70%,45%)`;
+        typeColors.set(type,color); return color;
+      }
 
       document.addEventListener('DOMContentLoaded',()=>{
         document.getElementById('tabNotes').onclick=()=>switchTab('notes');
@@ -253,156 +126,124 @@
         document.getElementById('notesTagFilter').onchange=renderNotes;
         document.getElementById('dataSearch').oninput=renderData;
         document.getElementById('dataVarFilter').onchange=renderData;
-        document.getElementById('notesExportCsv').onclick=exportNotesCsv;
-        document.getElementById('dataExportCsv').onclick=exportDataCsv;
-        const genBtn=document.getElementById('generateIdsBtn'); if(genBtn) genBtn.onclick=generateIds;
+        document.getElementById('notesExportCsv').onclick=()=>console.log('export notes',getFilteredNotes());
+        document.getElementById('dataExportCsv').onclick=()=>console.log('export data',getFilteredData());
         document.getElementById('toggleAllCollapseBtn').onclick=toggleAllCollapsed;
         document.getElementById('detCloseBtn').onclick=closeDetail;
-        document.addEventListener('keydown',(e)=>{ if(e.key==='Escape'){ closeDetail(); } });
         loadAll();
       });
 
       async function loadAll(){
         try{
           const url=new URL(DEFAULT_APPS_URL); url.searchParams.set('mode','all');
-          const res=await fetch(url.toString()); const json=await res.json();
-          state.notes=Array.isArray(json.notes)?json.notes:[]; state.data=Array.isArray(json.data)?json.data:[];
-        }catch(e){
-          try{
-            const url=new URL(DEFAULT_APPS_URL); url.searchParams.set('mode','all');
-            const data=await jsonp(url.toString());
-            state.notes=Array.isArray(data.notes)?data.notes:[]; state.data=Array.isArray(data.data)?data.data:[];
-          }catch(e2){ console.error('Errore caricamento dati:',e2); showToast('Errore nel recupero dati dal server','err',5000); }
-        }
+          const res=await fetch(url); const json=await res.json();
+          state.notes=Array.isArray(json.notes)?json.notes:[];
+          state.data=Array.isArray(json.data)?json.data:[];
+        }catch(e){ console.error(e); }
         populateFilters(); renderNotes(); renderData();
       }
 
-      function jsonp(url){ return new Promise((resolve,reject)=>{ const cb='cb'+Math.random().toString(36).substr(2,8);
-        const s=document.createElement('script'); s.src=url+'&callback='+cb; s.onerror=reject;
-        window[cb]=(data)=>{ delete window[cb]; document.body.removeChild(s); resolve(data); };
-        document.body.appendChild(s); }); }
+      function switchTab(which){
+        document.getElementById('notesPanel').style.display=(which==='notes')?'block':'none';
+        document.getElementById('dataPanel').style.display=(which==='data')?'block':'none';
+        document.getElementById('tabNotes').classList.toggle('active',which==='notes');
+        document.getElementById('tabData').classList.toggle('active',which==='data');
+      }
 
-      function switchTab(t){ if(t==='notes'){ document.getElementById('notesPanel').style.display='block';
-        document.getElementById('dataPanel').style.display='none'; document.getElementById('tabNotes').classList.add('active');
-        document.getElementById('tabData').classList.remove('active'); }
-        else { document.getElementById('notesPanel').style.display='none';
-        document.getElementById('dataPanel').style.display='block'; document.getElementById('tabNotes').classList.remove('active');
-        document.getElementById('tabData').classList.add('active'); } }
+      function populateFilters(){
+        const typeSet=new Set(); state.notes.forEach(n=>{ if(n.Type) typeSet.add(n.Type); });
+        document.getElementById('notesTypeFilter').innerHTML='<option value="">Tutti i type</option>'+Array.from(typeSet).map(t=>`<option value="${t}">${t}</option>`).join('');
+        const tagSet=new Set(); state.notes.forEach(n=>{ (n.Tags||'').split(',').forEach(t=>{ if(t.trim()) tagSet.add(t.trim()); }); });
+        document.getElementById('notesTagFilter').innerHTML='<option value="">Tutti i tag</option>'+Array.from(tagSet).map(t=>`<option value="${t}">${t}</option>`).join('');
+        const varSet=new Set(); state.data.forEach(d=>{ if(d.Variable) varSet.add(d.Variable); });
+        document.getElementById('dataVarFilter').innerHTML='<option value="">Tutte le variabili</option>'+Array.from(varSet).map(v=>`<option value="${v}">${v}</option>`).join('');
+      }
 
-      function populateFilters(){ const types=[...new Set(state.notes.map(n=>n.Type).filter(Boolean))];
-        const tags=[...new Set(state.notes.flatMap(n=> (n.Tags||"").split(/\s*,\s*/).filter(Boolean)))];
-        const varnames=[...new Set(state.data.map(d=>d.Variable).filter(Boolean))];
-        fillSelect('notesTypeFilter',['',...types]); fillSelect('notesTagFilter',['',...tags]); fillSelect('dataVarFilter',['',...varnames]); }
-      function fillSelect(id,vals){ const sel=document.getElementById(id); if(!sel)return; sel.innerHTML='';
-        for(const v of vals){ const opt=document.createElement('option'); opt.value=v; opt.textContent=v||'(tutti)'; sel.appendChild(opt);} }
-
-      const typeColors=new Map();
-      function getTypeColor(type){
-        if(typeColors.has(type)) return typeColors.get(type);
-        const hue=Math.floor(Math.random()*360);
-        const color=`hsl(${hue},70%,45%)`;
-        typeColors.set(type,color); return color;
+      function getFilteredNotes(){
+        const search=document.getElementById('notesSearch').value.toLowerCase();
+        const typeFilter=document.getElementById('notesTypeFilter').value;
+        const tagFilter=document.getElementById('notesTagFilter').value;
+        return state.notes.filter(n=>{
+          if(typeFilter && n.Type!==typeFilter) return false;
+          if(tagFilter && !(n.Tags||'').toLowerCase().includes(tagFilter.toLowerCase())) return false;
+          if(!search) return true;
+          return (n.Title||''+n.Text||''+n.Note||'').toLowerCase().includes(search);
+        });
       }
 
       function renderNotes(){
-        const q=document.getElementById('notesSearch').value.toLowerCase();
-        const t=document.getElementById('notesTypeFilter').value;
-        const tagf=document.getElementById('notesTagFilter').value;
-        let notes=state.notes;
-        if(q) notes=notes.filter(n=> (n.Title||'').toLowerCase().includes(q)||(n.DOI||'').toLowerCase().includes(q)||(n.Text||'').toLowerCase().includes(q));
-        if(t) notes=notes.filter(n=>n.Type===t);
-        if(tagf) notes=notes.filter(n=>(n.Tags||'').split(/\s*,\s*/).includes(tagf));
-        const groups=groupBy(notes,n=>n.DOI||'(senza DOI)'); const container=document.getElementById('notesGroups'); container.innerHTML='';
-        for(const [doi,arr] of groups){
-          const g=document.createElement('div'); g.className='group'; const h3=document.createElement('h3');
-          h3.textContent=doi; const m=document.createElement('span'); m.className='meta'; m.textContent=`${arr.length} note`; h3.appendChild(m); g.appendChild(h3);
+        const filtered=getFilteredNotes();
+        const groups=groupBy(filtered,n=>n.Title||'(senza titolo)');
+        const container=document.getElementById('notesGroups'); container.innerHTML='';
+        Object.keys(groups).forEach(title=>{
+          const items=groups[title];
+          const box=document.createElement('div'); box.className='group';
+          box.innerHTML=`<h3>${title}<span class="meta">${items.length}</span></h3>`;
           const grid=document.createElement('div'); grid.className='items-grid';
-          for(const item of arr){
-            const id=item.ID||''; const img=item.Img||''; const noteText=item.Note||''; const link=item.Link||'';
-            const tags=(item.Tags||'').split(/\s*,\s*/).filter(Boolean);
-            const card=document.createElement('div'); card.className='note-card'; if(collapsed.has(id)||collapseAll) card.classList.add('collapsed');
-            const imgHtml=img?`<img class="thumb" src="${escapeAttr(img)}" alt="img ${escapeAttr(id)}">`:'';
+          items.forEach(item=>{
+            const id=item.ID||''; const tags=(item.Tags||'').split(',').map(t=>t.trim()).filter(Boolean);
+            const link=item.Link||item.URL||''; const noteText=item.Note||''; const img=item.ImageLink||'';
+            const card=document.createElement('div'); card.className='note-card';
             card.innerHTML=`
-              ${imgHtml}
+              ${img?`<img class="thumb" src="${img}">`:``}
               <div class="card-body">
-                <span class="type" style="background:${getTypeColor(String(item.Type||'SENZA TIPO'))}">${escapeHtml(String(item.Type||'SENZA TIPO'))}</span>
-                <div class="meta">DOI: ${escapeHtml(String(item.DOI||''))}</div>
-                <div class="fulltext clamp-3">${escapeHtml(String(item.Text||''))}</div>
-                ${tags.length?`<div class="tags">${tags.map(t=>`<span class="tag">${escapeHtml(t)}</span>`).join('')}</div>`:''}
-                ${noteText?`<div class="note-highlight"><b>Nota:</b> ${escapeHtml(noteText)}</div>`:''}
-                <div class="linkwrap meta">${link?`<a href="${escapeAttr(link)}" target="_blank" rel="noopener">Apri sorgente</a>`:''}</div>
+                <span class="type" style="background:${getTypeColor(item.Type||'SENZA TIPO')}">${item.Type||'SENZA TIPO'}</span>
+                <div class="fulltext">${item.Text||''}</div>
+                ${tags.length?`<div class="tags">${tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div>`:''}
+                ${noteText?`<div class="note-highlight"><b>Nota:</b> ${noteText}</div>`:''}
+                <div class="linkwrap">${link?`<a href="${link}" target="_blank">Apri sorgente</a>`:''}</div>
               </div>
               <div class="actions-row">
-                ${link?`<a class="btn" href="${escapeAttr(link)}" target="_blank" rel="noopener">Vai all’articolo</a>`:''}
-                <button class="btn" data-details="${escapeAttr(id)}">Dettagli</button>
-                <button class="btn" data-collapse="${escapeAttr(id)}">${(collapsed.has(id)||collapseAll)?'Espandi':'Compatta'}</button>
+                ${link?`<a class="btn" href="${link}" target="_blank">Vai all’articolo</a>`:''}
+                <button class="btn" data-details="${id}">Dettagli</button>
               </div>`;
+            const detBtn=card.querySelector('[data-details]'); if(detBtn) detBtn.onclick=()=>openDetail(item);
             grid.appendChild(card);
-          }
-          g.appendChild(grid); container.appendChild(g);
-        }
-        container.querySelectorAll('[data-details]').forEach(b=>b.onclick=()=>openDetail(b.dataset.details));
-        container.querySelectorAll('[data-collapse]').forEach(b=>b.onclick=()=>toggleCollapsed(b.dataset.collapse));
+          });
+          box.appendChild(grid); container.appendChild(box);
+        });
+      }
+
+      function getFilteredData(){
+        const search=document.getElementById('dataSearch').value.toLowerCase();
+        const varFilter=document.getElementById('dataVarFilter').value;
+        return state.data.filter(d=>{
+          if(varFilter && d.Variable!==varFilter) return false;
+          if(!search) return true;
+          return (d.Title||''+d.Variable||''+d.Notes||'').toLowerCase().includes(search);
+        });
       }
 
       function renderData(){
-        const q=document.getElementById('dataSearch').value.toLowerCase();
-        const varf=document.getElementById('dataVarFilter').value;
-        let data=state.data;
-        if(q) data=data.filter(d=>(d.Variable||'').toLowerCase().includes(q)||(d.DOI||'').toLowerCase().includes(q));
-        if(varf) data=data.filter(d=>d.Variable===varf);
-        const groups=groupBy(data,d=>d.DOI||'(senza DOI)'); const container=document.getElementById('dataGroups'); container.innerHTML='';
-        for(const [doi,arr] of groups){
-          const g=document.createElement('div'); g.className='group'; const h3=document.createElement('h3'); h3.textContent=doi; const m=document.createElement('span'); m.className='meta'; m.textContent=`${arr.length} dati`; h3.appendChild(m); g.appendChild(h3);
+        const filtered=getFilteredData();
+        const groups=groupBy(filtered,d=>d.Title||'(senza titolo)');
+        const container=document.getElementById('dataGroups'); container.innerHTML='';
+        Object.keys(groups).forEach(title=>{
+          const box=document.createElement('div'); box.className='group';
+          box.innerHTML=`<h3>${title}<span class="meta">${groups[title].length}</span></h3>`;
           const grid=document.createElement('div'); grid.className='items-grid';
-          for(const item of arr){
-            const id=item.ID||''; const tags=(item.Tags||'').split(/\s*,\s*/).filter(Boolean);
+          groups[title].forEach(item=>{
             const card=document.createElement('div'); card.className='note-card';
-            card.innerHTML=`
-              <div class="card-body">
-                <div><span class="type" style="background:${getTypeColor(String(item.Variable||'SENZA VAR'))}">${escapeHtml(String(item.Variable||'SENZA VAR'))}</span></div>
-                <div class="meta">DOI: ${escapeHtml(String(item.DOI||''))}</div>
-              </div>
-              <div class="actions-row">
-                <button class="btn" data-details="${escapeAttr(id)}">Dettagli</button>
-              </div>`;
+            card.innerHTML=`<div class="card-body">
+              <b>${item.Value||''} ${item.Unit||''}</b>
+              <div>${item.Notes||''}</div>
+            </div>`;
             grid.appendChild(card);
-          }
-          g.appendChild(grid); container.appendChild(g);
-        }
-        container.querySelectorAll('[data-details]').forEach(b=>b.onclick=()=>openDetail(b.dataset.details));
+          });
+          box.appendChild(grid); container.appendChild(box);
+        });
       }
 
-      function openDetail(id){
-        const item=state.notes.find(n=>(n.ID||'')===id)||state.data.find(d=>(d.ID||'')===id); if(!item) return;
+      function openDetail(item){
+        if(!item) return;
         document.getElementById('detTitle').textContent=item.Title||'(senza titolo)';
-        const imgEl=document.getElementById('detImg'); if(item.Img){ imgEl.src=item.Img; imgEl.style.display='block'; } else { imgEl.style.display='none'; }
-        document.getElementById('detDoi').textContent=item.DOI||''; document.getElementById('detType').textContent=item.Type||item.Variable||''; 
-        document.getElementById('detTags').textContent=item.Tags||''; document.getElementById('detNote').textContent=item.Note||'';
-        document.getElementById('detText').textContent=item.Text||''; document.getElementById('detLink').innerHTML=item.Link?`<a href="${escapeAttr(item.Link)}" target="_blank" rel="noopener">${escapeHtml(item.Link)}</a>`:'';
+        document.getElementById('detBody').textContent=item.Text||'';
         document.getElementById('detailOverlay').style.display='flex';
       }
       function closeDetail(){ document.getElementById('detailOverlay').style.display='none'; }
 
-      function toggleCollapsed(id){ if(collapsed.has(id)) collapsed.delete(id); else collapsed.add(id); renderNotes(); }
+      function groupBy(arr,keyFn){ return arr.reduce((acc,x)=>{ const k=keyFn(x); (acc[k] ||= []).push(x); return acc; },{}); }
       function toggleAllCollapsed(){ collapseAll=!collapseAll; renderNotes(); }
-
-      function exportNotesCsv(){ const arr=getFilteredNotes(); const csv=arrayToCsv(arr); downloadCsv(csv,'notes.csv'); }
-      function exportDataCsv(){ const arr=getFilteredData(); const csv=arrayToCsv(arr); downloadCsv(csv,'data.csv'); }
-      function getFilteredNotes(){ const q=document.getElementById('notesSearch').value.toLowerCase(); const t=document.getElementById('notesTypeFilter').value; const tagf=document.getElementById('notesTagFilter').value;
-        return state.notes.filter(n=> (!q||((n.Title||'').toLowerCase().includes(q)||(n.DOI||'').toLowerCase().includes(q)||(n.Text||'').toLowerCase().includes(q))) && (!t||n.Type===t) && (!tagf||(n.Tags||'').split(/\s*,\s*/).includes(tagf)) ); }
-      function getFilteredData(){ const q=document.getElementById('dataSearch').value.toLowerCase(); const varf=document.getElementById('dataVarFilter').value;
-        return state.data.filter(d=> (!q||((d.Variable||'').toLowerCase().includes(q)||(d.DOI||'').toLowerCase().includes(q))) && (!varf||d.Variable===varf) ); }
-
-      function arrayToCsv(arr){ if(!arr.length) return ''; const headers=Object.keys(arr[0]); const lines=[headers.join(',')]; for(const r of arr){ lines.push(headers.map(h=> JSON.stringify(r[h]||'')).join(',')); } return lines.join('\n'); }
-      function downloadCsv(csv,filename){ const blob=new Blob([csv],{type:'text/csv'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=filename; a.click(); }
-      async function generateIds(){ showToast('Funzione non implementata in questa demo','info'); }
-
-      function groupBy(arr,fn){ const m=new Map(); for(const x of arr){ const k=fn(x); if(!m.has(k)) m.set(k,[]); m.get(k).push(x); } return m.entries(); }
-      function escapeHtml(str){ return String(str).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c])); }
-      function escapeAttr(str){ return escapeHtml(str).replace(/"/g,'&quot;'); }
-
-      function showToast(msg,type='info',dur=3000){ const c=document.getElementById('toastContainer'); const t=document.createElement('div'); t.className='toast '+type; t.textContent=msg; c.appendChild(t); setTimeout(()=>{t.style.opacity='0'; setTimeout(()=>t.remove(),400);},dur); }
     </script>
   </body>
 </html>
