@@ -5,102 +5,234 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Article Note Saver - Dashboard</title>
     <style>
-      :root{--bg:#fdfdfd;--panel:#ffffff;--muted:#556b6f;--text:#1a2b2c;--accent:#2e8b57;--accent2:#1e90ff;}
-      *{box-sizing:border-box;transition:all .2s ease-in-out}
-      body{margin:0;font-family:system-ui,Segoe UI,Roboto,Arial;background:var(--bg);color:var(--text)}
-      .header{padding:20px;border-bottom:2px solid #cde;background:linear-gradient(90deg,var(--accent) 0%,var(--accent2) 100%);color:#fff}
-      .header h1{margin:0;font-size:22px;font-weight:600}
-      .tabs{display:flex;gap:10px;margin-top:12px}
-      .tabs button{padding:8px 14px;border-radius:8px;background:#ffffff33;color:#fff;border:1px solid #ffffff55;cursor:pointer}
-      .tabs button.active{background:#fff;color:var(--accent);font-weight:600}
-      main{padding:20px}
-      .filters{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap}
-      .filters input,.filters select{padding:8px;border-radius:6px;border:1px solid #aac;background:#f0f8ff;color:var(--text)}
-      .filters button{padding:8px 14px;border:0;border-radius:6px;background:var(--accent2);color:#fff;font-weight:600;cursor:pointer}
-      .groups{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px}
-      .group{background:var(--panel);border:1px solid #ccd;border-radius:12px;overflow:hidden;box-shadow:0 2px 6px rgba(0,0,0,.1)}
-      .group:hover{transform:scale(1.02);box-shadow:0 4px 12px rgba(0,0,0,.15)}
-      .group h3{margin:0;padding:12px;border-bottom:1px solid #dde;font-size:15px;background:var(--accent);color:#fff}
-      .item{padding:12px;border-top:1px dashed #ccd;font-size:13px;display:grid;grid-template-columns:84px 1fr;gap:10px;align-items:start}
-      .item:first-child{border-top:0}
-      .item a{color:var(--accent2);text-decoration:none;font-weight:600}
-      .item a:hover{text-decoration:underline}
-      .meta{color:var(--muted);font-size:12px;margin-top:4px}
-      .tags{margin-top:6px;display:flex;gap:6px;flex-wrap:wrap}
-      .tag{font-size:11px;color:#fff;background:var(--accent2);padding:3px 7px;border-radius:10px}
-      .thumb{width:84px;height:84px;border:1px solid #e5ecf0;border-radius:8px;object-fit:cover;background:#f7fafc}
-      .noimg{width:84px;height:84px;border:1px dashed #e5ecf0;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:11px;color:#94a3b8;background:#fbfdff}
-      .actions-row{margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-      .btn{padding:8px 12px;border-radius:8px;border:1px solid #cbd5e1;background:#fff;cursor:pointer}
-      .btn.primary{background:var(--accent2);color:#fff;border-color:var(--accent2)}
-      /* Stato compattato */
-      .item.collapsed{grid-template-columns:1fr}
-      .item.collapsed .left-col{display:none}
-      .item.collapsed .body .fulltext,
-      .item.collapsed .body .linkwrap,
-      .item.collapsed .body .ids{display:none}
+      :root {
+        --bg: #f6f7fb;
+        --panel: #ffffff;
+        --muted: #64748b;
+        --text: #0f172a;
+        --accent: #2563eb;
+        --accent2: #10b981;
+        --ring: #93c5fd;
+        --border: #e5e7eb;
+        --border-strong: #cbd5e1;
+      }
 
-      /* Overlay generico */
-      .overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:99999}
-      .sheet{width:min(860px,94vw);max-height:min(85vh,900px);overflow:auto;background:#fff;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.3);padding:14px}
-      .sheet .hd{display:flex;gap:8px;align-items:center;margin-bottom:8px}
-      .sheet .hd b{flex:1}
-      .sheet .grid{display:grid;grid-template-columns:140px 1fr;gap:8px}
-      .kv .k{font-weight:700}
-      .kv .v{color:#1f2937}
-      .imgwide{width:100%;max-height:300px;object-fit:cover;border-radius:10px;border:1px solid #e5ecf0;background:#f7fafc}
+      * { box-sizing: border-box; transition: all .18s ease; }
+      html, body { height: 100%; }
+      body {
+        margin: 0;
+        font-family: system-ui, Segoe UI, Roboto, Arial, sans-serif;
+        background: radial-gradient(1200px 800px at 20% -10%, #eef2ff 0%, #f8fafc 40%, var(--bg) 100%);
+        color: var(--text);
+        line-height: 1.55;
+        letter-spacing: .1px;
+      }
+      :focus-visible { outline: 3px solid var(--ring); outline-offset: 2px; border-radius: 10px; }
 
-      /* Link widget (già esistente) */
-      .link-widget{width:min(1100px,95vw);height:min(75vh,780px);background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.3);display:grid;grid-template-columns:1.3fr .7fr}
-      .lw-header{grid-column:1/span 2;padding:10px 12px;background:linear-gradient(90deg,var(--accent),var(--accent2));color:#fff;display:flex;align-items:center;gap:8px}
-      .lw-header b{flex:1}
-      .lw-left{border-right:1px solid #e5ecf0;padding:10px;overflow:auto}
-      .lw-right{padding:10px;overflow:auto;display:flex;flex-direction:column}
-      .lw-search{width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:8px}
-      .lw-list{margin-top:10px}
-      .lw-item{border-bottom:1px solid #eef3f6;padding:8px}
-      .lw-item:hover{background:#f7fafc}
-      .muted{color:#6b7280;font-size:12px}
-      .selected-list{display:flex;flex-direction:column;gap:6px;margin-top:8px}
-      .pill{display:inline-block;font-size:12px;padding:4px 8px;border-radius:999px;background:#eef6ff;border:1px solid #cbd5e1}
+      /* Header */
+      .header {
+        padding: 22px;
+        border-bottom: 1px solid #dbeafe;
+        background:
+          linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,0)) 0 0/100% 100%,
+          linear-gradient(90deg, var(--accent) 0%, var(--accent2) 100%);
+        color: #fff;
+      }
+      .header h1 { margin: 0; font-size: 24px; font-weight: 800; letter-spacing: .2px; }
+      .tabs { display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
+      .tabs button {
+        padding: 10px 16px; border-radius: 999px; background: #ffffff2b;
+        color: #fff; border: 1px solid #ffffff55; cursor: pointer; font-size: 14px; backdrop-filter: blur(2px);
+      }
+      .tabs button:hover { background: #ffffff45; }
+      .tabs button.active { background: #fff; color: var(--accent); font-weight: 700; }
+
+      /* Full-width content: ogni articolo occupa una banda orizzontale */
+      main { padding: 24px 28px; max-width: none; margin: 0; }
+
+      /* Filters */
+      .filters {
+        display: grid;
+        grid-template-columns: 1fr repeat(2, minmax(180px, 240px)) auto auto auto;
+        gap: 12px;
+        margin-bottom: 20px;
+      }
+      @media (max-width: 980px) { .filters { grid-template-columns: 1fr 1fr; } }
+      .filters input, .filters select {
+        padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border);
+        background: #ffffff; color: var(--text); font-size: 14px; box-shadow: 0 1px 0 rgba(0,0,0,.02);
+      }
+      .filters input::placeholder { color: #94a3b8; }
+      .filters button {
+        padding: 10px 14px; border: 1px solid var(--border-strong); border-radius: 10px;
+        background: #fff; color: var(--text); font-weight: 600; cursor: pointer; font-size: 14px;
+      }
+      .filters button:hover { background: #f3f4f6; }
+      .filters #notesExportCsv, .filters #dataExportCsv { background: var(--accent); border-color: var(--accent); color: #fff; }
+      .filters #notesExportCsv:hover, .filters #dataExportCsv:hover { background: #1d4ed8; }
+
+      /* BANDS: ogni .group è una banda piena larghezza; dentro, griglia uniforme di note */
+      .groups {
+        display: flex;
+        flex-direction: column;     /* articoli impilati verticalmente in bande */
+        gap: 22px;
+        width: 100%;
+      }
+      .group {
+        width: 100%;
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 1px 0 rgba(15,23,42,0.02), 0 10px 24px -18px rgba(2,6,23,0.3);
+      }
+      .group:hover { transform: translateY(-2px); box-shadow: 0 14px 30px -14px rgba(2,6,23,.35); }
+      .group h3 {
+        margin: 0; padding: 14px 16px; border-bottom: 1px solid var(--border);
+        font-size: 16px; font-weight: 700;
+        background: linear-gradient(90deg, var(--accent) 0%, var(--accent2) 100%);
+        color: #fff; display: flex; gap: 8px; align-items: center; justify-content: space-between;
+      }
+      .group h3 .meta {
+        font-weight: 600; opacity: .95; font-size: 12px; padding: 2px 8px;
+        background: #ffffff2b; border: 1px solid #ffffff55; border-radius: 999px;
+      }
+
+      /* Griglia uniforme di note all’interno della banda */
+      .items-grid{
+        display:grid;
+        grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); /* riempi orizzontalmente tutta la banda */
+        grid-auto-rows: 1fr;          /* altezze uniformi per riga */
+        gap:14px;
+        padding:12px;
+        align-items: stretch;         /* tutte le card stessa altezza in riga */
+      }
+
+      .note-card{
+        background:#fff;
+        border:1px solid #e5e7eb;
+        border-radius:12px;
+        box-shadow:0 2px 8px rgba(0,0,0,.06);
+        overflow:hidden;
+        display:flex;
+        flex-direction:column;
+        height:100%;                  /* riempi la cella */
+      }
+      .note-card:hover{ transform:translateY(-2px); box-shadow:0 8px 22px rgba(0,0,0,.09); }
+      .note-card .thumb,
+      .note-card .noimg{ width:100%; height:140px; border-radius:0; margin:0; }
+      .note-card .noimg{ border-style:dashed; display:flex;align-items:center;justify-content:center;color:#94a3b8;background:#f8fafc }
+      .note-card .card-body{ padding:12px; display:flex; flex-direction:column; gap:6px; flex:1; }
+      .note-card .title-row{ font-size:14px; font-weight:700; line-height:1.25 }
+      .note-card .type{ font-size:11px; font-weight:800; color:#2563eb; text-transform:uppercase; letter-spacing:.3px }
+      .note-card .meta{ color:#6b7280; font-size:12px }
+      .note-card .fulltext{ font-size:13px; color:#0f172a }
+      .note-card .tags{ display:flex; gap:6px; flex-wrap:wrap }
+      .note-card .tag{ font-size:11px; color:#0b1220; background:#ecfeff; padding:3px 8px; border-radius:999px; border:1px solid #bae6fd }
+      .note-card .actions-row{ margin:0 12px 12px; display:flex; gap:8px; flex-wrap:wrap }
+      .note-card .btn{ padding:6px 10px; font-size:12px; border-radius:8px; border:1px solid #d1d5db; background:#fff; cursor:pointer }
+      .note-card .btn:hover{ background:#f3f4f6 }
+      .note-card .btn.primary{ background:#2563eb; color:#fff; border-color:#2563eb }
+      .note-card.collapsed .fulltext,
+      .note-card.collapsed .linkwrap,
+      .note-card.collapsed .ids{ display:none }
+
+      .clamp-2 { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+      .clamp-3 { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; }
+
+      .linkwrap a { color: #0ea5e9; text-decoration: none; font-weight: 700; }
+      .linkwrap a:hover { text-decoration: underline; }
+
+      .ids { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+
+      .btn {
+        padding: 8px 14px; border-radius: 10px; border: 1px solid var(--border-strong);
+        background: #fff; cursor: pointer; font-size: 13px; font-weight: 600;
+      }
+      .btn:hover { background: #f3f4f6; }
+      .btn[disabled] { opacity: .5; cursor: not-allowed; }
+      .btn.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+      .btn.primary:hover { background: #1d4ed8; }
+
+      /* Overlay */
+      .overlay {
+        position: fixed; inset: 0; background: rgba(2,6,23,.52);
+        display: none; align-items: center; justify-content: center; z-index: 99999;
+      }
+      .sheet {
+        width: min(880px, 96vw); max-height: min(86vh, 900px);
+        overflow: auto; background: #fff; border-radius: 16px;
+        box-shadow: 0 14px 40px rgba(2, 6, 23, .36); padding: 18px;
+      }
+      .sheet .hd { display: flex; gap: 12px; align-items: center; margin-bottom: 10px; }
+      .sheet .hd b { flex: 1; font-size: 18px; }
+      .sheet .grid { display: grid; grid-template-columns: 160px 1fr; gap: 10px; }
+      .kv .k { font-weight: 800; color: #0b1220; }
+      .kv .v { color: #1f2937; }
+      .imgwide {
+        width: 100%; max-height: 320px; object-fit: cover; border-radius: 12px; border: 1px solid var(--border);
+        background: #f7fafc; margin-bottom: 10px;
+      }
+
+      /* Link widget */
+      .link-widget {
+        width: min(1100px, 96vw); height: min(78vh, 820px);
+        background: #fff; border-radius: 16px; overflow: hidden;
+        box-shadow: 0 14px 40px rgba(2,6,23,.36); display: grid; grid-template-columns: 1.2fr .8fr;
+      }
+      .lw-header { grid-column: 1 / span 2; padding: 12px 14px; background: linear-gradient(90deg, var(--accent), var(--accent2)); color: #fff; display: flex; align-items: center; gap: 8px; }
+      .lw-header b { flex: 1; }
+      .lw-left { border-right: 1px solid var(--border); padding: 10px; overflow: auto; }
+      .lw-right { padding: 10px; overflow: auto; display: flex; flex-direction: column; }
+      .lw-search { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; background: #fff; }
+      .lw-list { margin-top: 10px; }
+      .lw-item { border-bottom: 1px solid #eef3f6; padding: 10px; }
+      .lw-item:hover { background: #f8fafc; }
+      .muted { color: #6b7280; font-size: 12px; }
+      .selected-list { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+      .pill { display: inline-block; font-size: 12px; padding: 4px 8px; border-radius: 999px; background: #eef6ff; border: 1px solid var(--border-strong); }
 
       /* Toast */
-      .toast-container{position:fixed;top:16px;right:16px;display:flex;flex-direction:column;gap:8px;z-index:100000}
-      .toast{min-width:240px;max-width:360px;background:#fff;border:1px solid #cbd5e1;border-left:4px solid var(--accent2);box-shadow:0 4px 16px rgba(0,0,0,.15);padding:10px 12px;border-radius:10px;font-size:13px;color:var(--text)}
-      .toast.ok{border-left-color:#16a34a}
-      .toast.err{border-left-color:#dc2626}
-      .toast.info{border-left-color:var(--accent2)}
+      .toast-container { position: fixed; top: 16px; right: 16px; display: flex; flex-direction: column; gap: 8px; z-index: 100000; }
+      .toast {
+        min-width: 260px; max-width: 380px; background: #fff; border: 1px solid var(--border-strong);
+        border-left: 6px solid var(--accent); box-shadow: 0 6px 20px rgba(2,6,23,.18);
+        padding: 12px 14px; border-radius: 12px; font-size: 14px; color: var(--text);
+      }
+      .toast.ok  { border-left-color: #16a34a; }
+      .toast.err { border-left-color: #dc2626; }
+      .toast.info{ border-left-color: var(--accent); }
     </style>
   </head>
   <body>
     <header class="header">
       <h1>Article Note Saver - Dashboard</h1>
-      <div class="tabs">
-        <button id="tabNotes" class="active">Appunti</button>
-        <button id="tabData">Dati</button>
+      <div class="tabs" role="tablist" aria-label="Sezioni">
+        <button id="tabNotes" class="active" role="tab" aria-selected="true" aria-controls="notesPanel">Appunti</button>
+        <button id="tabData" role="tab" aria-selected="false" aria-controls="dataPanel">Dati</button>
       </div>
     </header>
 
     <main>
-      <section id="notesPanel">
+      <section id="notesPanel" role="tabpanel" aria-labelledby="tabNotes">
         <div class="filters">
-          <input id="notesSearch" placeholder="Cerca testo/titolo/DOI" />
-          <select id="notesTypeFilter"><option value="">Tutti i type</option></select>
-          <select id="notesTagFilter"><option value="">Tutti i tag</option></select>
+          <input id="notesSearch" placeholder="Cerca testo / titolo / DOI" aria-label="Cerca nelle note" />
+          <select id="notesTypeFilter" aria-label="Filtra per Type"><option value="">Tutti i type</option></select>
+          <select id="notesTagFilter" aria-label="Filtra per Tag"><option value="">Tutti i tag</option></select>
           <button id="notesExportCsv" title="Esporta gli appunti filtrati in CSV">Esporta CSV</button>
           <button id="generateIdsBtn" title="Assegna ID alle note senza ID">Genera ID</button>
           <button id="toggleAllCollapseBtn" title="Compatta/Espandi tutte">Toggle tutti</button>
         </div>
-        <div id="notesGroups" class="groups"></div>
+        <div id="notesGroups" class="groups" aria-live="polite"></div>
       </section>
 
-      <section id="dataPanel" style="display:none;">
+      <section id="dataPanel" style="display:none;" role="tabpanel" aria-labelledby="tabData">
         <div class="filters">
-          <input id="dataSearch" placeholder="Cerca per variabile/DOI" />
-          <select id="dataVarFilter"><option value="">Tutte le variabili</option></select>
+          <input id="dataSearch" placeholder="Cerca per variabile / DOI" aria-label="Cerca nei dati" />
+          <select id="dataVarFilter" aria-label="Filtra per variabile"><option value="">Tutte le variabili</option></select>
           <button id="dataExportCsv" title="Esporta i dati filtrati in CSV">Esporta CSV</button>
         </div>
-        <div id="dataGroups" class="groups"></div>
+        <div id="dataGroups" class="groups" aria-live="polite"></div>
       </section>
     </main>
 
@@ -160,10 +292,9 @@
     <script>
       const DEFAULT_APPS_URL="https://script.google.com/macros/s/AKfycbyRXsW2jhj_NarPEyX5T8Yqf8U05qrZtPWReMwC9oW4dHTqXegnZhUmCwuYVmMXZ1uX/exec";
       const state={ notes:[], data:[] };
-      const collapsed = new Set();      // ID note compattate
-      let collapseAll=false;            // toggle globale
+      const collapsed = new Set();
+      let collapseAll=false;
 
-      // ---- INIT
       document.addEventListener('DOMContentLoaded',()=>{
         document.getElementById('tabNotes').onclick=()=>switchTab('notes');
         document.getElementById('tabData').onclick=()=>switchTab('data');
@@ -179,7 +310,6 @@
         const genBtn=document.getElementById('generateIdsBtn'); if(genBtn) genBtn.onclick=generateIds;
         document.getElementById('toggleAllCollapseBtn').onclick=toggleAllCollapsed;
 
-        // overlay controls
         document.getElementById('lwCloseBtn').onclick=closeLinkWidget;
         document.getElementById('lwCancelBtn').onclick=closeLinkWidget;
         document.getElementById('lwConfirmBtn').onclick=confirmLink;
@@ -189,7 +319,6 @@
         loadAll();
       });
 
-      // ---- LOAD
       async function loadAll(){
         try{
           const url=new URL(DEFAULT_APPS_URL); url.searchParams.set('mode','all');
@@ -205,12 +334,18 @@
         populateFilters(); renderNotes(); renderData();
       }
 
-      // ---- UI helpers
       function switchTab(which){
         const nBtn=document.getElementById('tabNotes'), dBtn=document.getElementById('tabData');
         const nPanel=document.getElementById('notesPanel'), dPanel=document.getElementById('dataPanel');
-        if(which==='data'){ nBtn.classList.remove('active'); dBtn.classList.add('active'); nPanel.style.display='none'; dPanel.style.display=''; }
-        else { dBtn.classList.remove('active'); nBtn.classList.add('active'); dPanel.style.display='none'; nPanel.style.display=''; }
+        if(which==='data'){
+          nBtn.classList.remove('active'); nBtn.setAttribute('aria-selected','false');
+          dBtn.classList.add('active'); dBtn.setAttribute('aria-selected','true');
+          nPanel.style.display='none'; dPanel.style.display='';
+        } else {
+          dBtn.classList.remove('active'); dBtn.setAttribute('aria-selected','false');
+          nBtn.classList.add('active'); nBtn.setAttribute('aria-selected','true');
+          dPanel.style.display='none'; nPanel.style.display='';
+        }
       }
 
       function populateFilters(){
@@ -252,7 +387,7 @@
         });
       }
 
-      // ---- RENDER NOTES (con bottoni: Linka, Visualizza linked, Dettagli, Compatta)
+      /* RENDER NOTES: ogni articolo = banda orizzontale a tutta larghezza; dentro griglia uniforme */
       function renderNotes(){
         const filtered=getFilteredNotes();
         const groups=groupBy(filtered,x=>String(x.DOI||'Senza DOI'));
@@ -261,8 +396,11 @@
         Object.keys(groups).sort().forEach(doi=>{
           const items=groups[doi];
           const title=items[0].Title||doi||'Senza titolo';
+
           const box=document.createElement('div'); box.className='group';
-          box.innerHTML=`<h3>${escapeHtml(title)} <span class="meta">(${items.length})</span></h3>`;
+          box.innerHTML=`<h3><span class="clamp-2" style="max-width:82%">${escapeHtml(title)}</span> <span class="meta">${items.length}</span></h3>`;
+
+          const grid=document.createElement('div'); grid.className='items-grid';
 
           items.forEach(item=>{
             const id=String(item.ID||''); const linked=String(item.LinkedIDs||'');
@@ -270,46 +408,50 @@
             const link=String(item.Link||item.URL||'');
             const noteText=String(item.Note||''); const img=String(item.ImageLink||'');
 
-            const div=document.createElement('div'); div.className='item'+(collapsed.has(id)||collapseAll?' collapsed':'');
-            const left = `<div class="left-col">${img?`<a href="${escapeAttr(img)}" target="_blank" title="Apri immagine"><img class="thumb" src="${escapeAttr(img)}" alt="img ${escapeAttr(id)}"></a>`:`<div class="noimg">no img</div>`}</div>`;
+            const card=document.createElement('div');
+            card.className='note-card'+(collapsed.has(id)||collapseAll?' collapsed':'');
+            card.setAttribute('data-id', id);
 
-            const body = `
-              <div class="body">
-                <div><b>${escapeHtml(String(item.Type||'Senza tipo'))}</b> — <span>${escapeHtml(item.Title||'(senza titolo)')}</span></div>
+            const imgHtml = img
+              ? `<img class="thumb" src="${escapeAttr(img)}" alt="img ${escapeAttr(id)}">`
+              : `<div class="noimg">no img</div>`;
+
+            card.innerHTML = `
+              ${imgHtml}
+              <div class="card-body">
+                <div class="title-row">
+                  <span class="type">${escapeHtml(String(item.Type||'SENZA TIPO'))}</span>
+                  <span> — ${escapeHtml(item.Title||'(senza titolo)')}</span>
+                </div>
                 <div class="meta">DOI: ${escapeHtml(String(item.DOI||''))}</div>
-                <div class="fulltext">${escapeHtml(String(item.Text||''))}</div>
+                <div class="fulltext clamp-3">${escapeHtml(String(item.Text||''))}</div>
                 ${tags.length?`<div class="tags">${tags.map(t=>`<span class="tag">${escapeHtml(t)}</span>`).join('')}</div>`:''}
                 ${noteText?`<div class="meta"><b>Nota:</b> ${escapeHtml(noteText)}</div>`:''}
-                <div class="linkwrap meta">${link?`<a href="${escapeAttr(link)}" target="_blank">Apri sorgente</a>`:''}</div>
+                <div class="linkwrap meta">${link?`<a href="${escapeAttr(link)}" target="_blank" rel="noopener">Apri sorgente</a>`:''}</div>
                 <div class="ids meta">ID: <code>${escapeHtml(id||'(manca)')}</code> · Linked: ${escapeHtml(linked)}</div>
-                <div class="actions-row">
-                  <button class="btn" data-open-linker ${id?'':'disabled'}>${id?'Linka…':'Genera ID per abilitare'}</button>
-                  ${id?`<a class="btn" href="linked.html?id=${encodeURIComponent(id)}" target="_blank" rel="noopener">Visualizza linked</a>`:`<button class="btn" disabled>Visualizza linked</button>`}
-                  ${id?`<button class="btn" data-details="${escapeAttr(id)}">Dettagli</button>`:`<button class="btn" disabled>Dettagli</button>`}
-                  ${id?`<button class="btn" data-collapse="${escapeAttr(id)}">${(collapsed.has(id)||collapseAll)?'Espandi':'Compatta'}</button>`:`<button class="btn" disabled>Compatta</button>`}
-                </div>
+              </div>
+              <div class="actions-row">
+                <button class="btn" data-open-linker ${id?'':'disabled'}>${id?'Linka…':'Genera ID per abilitare'}</button>
+                ${id?`<a class="btn" href="linked.html?id=${encodeURIComponent(id)}" target="_blank" rel="noopener">Visualizza linked</a>`:`<button class="btn" disabled>Visualizza linked</button>`}
+                ${id?`<button class="btn" data-details="${escapeAttr(id)}">Dettagli</button>`:`<button class="btn" disabled>Dettagli</button>`}
+                ${id?`<button class="btn" data-collapse="${escapeAttr(id)}">${(collapsed.has(id)||collapseAll)?'Espandi':'Compatta'}</button>`:`<button class="btn" disabled>Compatta</button>`}
               </div>`;
 
-            div.innerHTML = left + body;
+            const openBtn=card.querySelector('[data-open-linker]'); if(openBtn) openBtn.onclick=()=>openLinkWidget(item);
+            const detBtn =card.querySelector('[data-details]');   if(detBtn)  detBtn.onclick=()=>openDetail(item);
+            const colBtn =card.querySelector('[data-collapse]');  if(colBtn)  colBtn.onclick=(e)=>toggleCollapsed(id,e.currentTarget,card);
 
-            const openBtn=div.querySelector('[data-open-linker]'); if(openBtn) openBtn.onclick=()=>openLinkWidget(item);
-            const detBtn =div.querySelector('[data-details]');   if(detBtn)  detBtn.onclick=()=>openDetail(item);
-            const colBtn =div.querySelector('[data-collapse]');  if(colBtn)  colBtn.onclick=(e)=>toggleCollapsed(id,e.currentTarget,div);
-
-            box.appendChild(div);
+            grid.appendChild(card);
           });
 
+          box.appendChild(grid);
           container.appendChild(box);
         });
       }
 
       function toggleCollapsed(id, btn, itemEl){
-        if(collapseAll){
-          collapseAll=false;
-          collapsed.clear();
-        }else{
-          if(collapsed.has(id)) collapsed.delete(id); else collapsed.add(id);
-        }
+        if(collapseAll){ collapseAll=false; collapsed.clear(); }
+        else{ if(collapsed.has(id)) collapsed.delete(id); else collapsed.add(id); }
         if(itemEl){
           itemEl.classList.toggle('collapsed', collapsed.has(id));
           btn.textContent = itemEl.classList.contains('collapsed') ? 'Espandi' : 'Compatta';
@@ -320,7 +462,7 @@
 
       function toggleAllCollapsed(){
         collapseAll=!collapseAll;
-        if(collapseAll){ // marca tutti gli ID attualmente filtrati
+        if(collapseAll){
           collapsed.clear();
           getFilteredNotes().forEach(n=>{ if(n.ID) collapsed.add(String(n.ID)); });
         }else{
@@ -329,30 +471,32 @@
         renderNotes();
       }
 
-      // ---- DATA RENDER
       function renderData(){
         const filtered=getFilteredData();
         const groups=groupBy(filtered,x=>String(x.Variable||'Senza variabile'));
         const container=document.getElementById('dataGroups'); container.innerHTML='';
         Object.keys(groups).sort().forEach(variable=>{
           const box=document.createElement('div'); box.className='group';
-          box.innerHTML=`<h3>${escapeHtml(variable)} <span class="meta">(${groups[variable].length})</span></h3>`;
+          box.innerHTML=`<h3><span>${escapeHtml(variable)}</span> <span class="meta">${groups[variable].length}</span></h3>`;
+          const grid=document.createElement('div'); grid.className='items-grid';
           groups[variable].forEach(item=>{
-            const link=String(item.Link||item.URL||''); const a=link?`<a href="${escapeAttr(link)}" target="_blank">Apri</a>`:'';
+            const link=String(item.Link||item.URL||''); const a=link?`<a href="${escapeAttr(link)}" target="_blank" rel="noopener">Apri</a>`:'';
             const val=String(item.Value||''); const unit=String(item.Unit||''); const mean=String(item.Mean||''); const std=String(item.StdDev||''); const n=String(item.N||'');
-            const div=document.createElement('div'); div.className='item'; div.style.gridTemplateColumns='1fr';
-            div.innerHTML=`
-              <div><b>${escapeHtml(val)} ${escapeHtml(unit)}</b> <span class="meta">N=${escapeHtml(n)} mean=${escapeHtml(mean)} sd=${escapeHtml(std)}</span></div>
-              <div class="meta">DOI: ${escapeHtml(String(item.DOI||''))}</div>
-              <div>${escapeHtml(String(item.Notes||''))}</div>
-              <div class="meta">${a}</div>`;
-            box.appendChild(div);
+            const card=document.createElement('div'); card.className='note-card';
+            card.innerHTML=`
+              <div class="card-body">
+                <div><b>${escapeHtml(val)} ${escapeHtml(unit)}</b> <span class="meta">N=${escapeHtml(n)} · mean=${escapeHtml(mean)} · sd=${escapeHtml(std)}</span></div>
+                <div class="meta">DOI: ${escapeHtml(String(item.DOI||''))}</div>
+                <div class="clamp-3">${escapeHtml(String(item.Notes||''))}</div>
+                <div class="meta" style="margin-top:8px">${a}</div>
+              </div>`;
+            grid.appendChild(card);
           });
+          box.appendChild(grid);
           container.appendChild(box);
         });
       }
 
-      // ---- DETAIL SHEET
       function openDetail(item){
         if(!item) return;
         document.getElementById('detTitle').textContent = String(item.Title||'(senza titolo)');
@@ -371,10 +515,8 @@
       }
       function closeDetail(){ document.getElementById('detailOverlay').style.display='none'; }
 
-      // ---- GROUP BY
       function groupBy(arr,keyFn){ return arr.reduce((acc,x)=>{ const k=keyFn(x); (acc[k] ||= []).push(x); return acc; },{}); }
 
-      // ---- CSV
       const NOTES_HEADERS=['CreatedAt','URL','Link','Title','DOI','Text','Tags','Type','ClientTimestamp','ID','LinkedIDs','Note','ImageLink'];
       const DATA_HEADERS=['CreatedAt','DOI','URL','Link','Variable','Value','Unit','N','Mean','StdDev','Notes','ClientTimestamp'];
 
@@ -392,12 +534,10 @@
         const a=document.createElement('a'); a.href=url; a.download=filename; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
       }
 
-      // ---- Utils
       function timestamp(){ const d=new Date(); const pad=n=>String(n).padStart(2,'0'); return `${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`; }
       function escapeHtml(str){ return String(str).replace(/[&<>"']/g,s=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s])); }
       function escapeAttr(str){ return escapeHtml(str).replace(/"/g,'&quot;'); }
 
-      // ---- JSONP
       function jsonp(baseUrl){
         return new Promise((resolve,reject)=>{
           try{
@@ -413,7 +553,6 @@
         });
       }
 
-      // ---- Toast
       function showToast(message,kind='info',timeout=3000){
         try{
           const c=document.getElementById('toastContainer'); if(!c) return alert(message);
@@ -423,7 +562,6 @@
         }catch(e){ console.warn('toast error',e); }
       }
 
-      // ---- Link widget logic (persistenza server)
       let linkOrigin=null, linkSelection=new Set();
 
       function openLinkWidget(item){
@@ -453,12 +591,12 @@
           const img=String(n.ImageLink||''); const imgHtml=img?`<img class="thumb" src="${escapeAttr(img)}" alt="img ${escapeAttr(id)}">`:`<div class="noimg">no img</div>`;
           const div=document.createElement('div'); div.className='lw-item';
           div.innerHTML=`
-            <label style="display:grid;grid-template-columns:24px 72px 1fr;gap:8px;align-items:flex-start;">
+            <label style="display:grid;grid-template-columns:24px 96px 1fr;gap:10px;align-items:flex-start;">
               <input class="lw-check" type="checkbox" value="${escapeAttr(id)}" ${checked} style="margin-top:6px;">
               <div>${imgHtml}</div>
               <div>
-                <div class="t">${escapeHtml(n.Title||'(senza titolo)')}</div>
-                <div class="muted">${escapeHtml(n.Text||'')}</div>
+                <div class="t clamp-2" style="font-weight:700">${escapeHtml(n.Title||'(senza titolo)')}</div>
+                <div class="muted clamp-2">${escapeHtml(n.Text||'')}</div>
                 ${n.Note?`<div class="muted"><b>Nota:</b> ${escapeHtml(n.Note)}</div>`:''}
                 ${tagsHtml?`<div class="tags" style="margin-top:6px;">${tagsHtml}</div>`:''}
                 <div class="muted" style="margin-top:6px;">ID: <code>${escapeHtml(id)}</code></div>
@@ -488,7 +626,6 @@
         }catch(err){ console.error('confirmLink error',err); showToast('Errore di rete durante il salvataggio','err',5000); }
       }
 
-      // ---- Server utils
       async function generateIds(){
         try{
           if(!confirm('Assegnare un ID alle note senza ID?')) return;
