@@ -251,7 +251,13 @@
                 const current = String(linked||'');
                 const arr = current.split(/[,;\s]+/).map(s=>s.trim()).filter(Boolean);
                 if (!arr.includes(targetId)) arr.push(targetId);
-                try { const res = await fetch(DEFAULT_APPS_URL, { method:'POST', headers:{'Content-Type':'application/json; charset=UTF-8'}, body: JSON.stringify({ mode:'updateLinks', id, linkedIds: arr.join(', ') }) }); await res.text(); } catch (_) { const url = new URL(DEFAULT_APPS_URL); url.searchParams.set('mode','updateLinks'); url.searchParams.set('id', id); url.searchParams.set('linkedIds', arr.join(', ')); await jsonp(url.toString()); } await loadAll();
+                // Usa JSONP (GET) per evitare CORS
+                const url = new URL(DEFAULT_APPS_URL);
+                url.searchParams.set('mode','updateLinks');
+                url.searchParams.set('id', id);
+                url.searchParams.set('linkedIds', arr.join(', '));
+                await jsonp(url.toString());
+                await loadAll();
               } catch (e) { console.error('Errore link add', e); alert('Errore nel collegare le note'); }
             };
             box.appendChild(div);
@@ -351,28 +357,14 @@
       function escapeAttr(str) {
         return escapeHtml(str).replace(/"/g, '&quot;');
       }
-      // Genera ID per le note senza ID
+      // Genera ID per le note senza ID (JSONP-only per evitare CORS)
       async function generateIds() {
         try {
           if (!confirm('Assegnare un ID alle note senza ID?')) return;
-          // Prova POST (CORS permesso), poi fallback JSONP (GET)
-          let assigned = null;
-          try {
-            const res = await fetch(DEFAULT_APPS_URL, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json; charset=UTF-8' },
-              body: JSON.stringify({ mode: 'assignIds' })
-            });
-            const txt = await res.text();
-            const m = txt && txt.match(/OK:?\s*(\d+)/i);
-            if (m) assigned = parseInt(m[1], 10);
-          } catch (_) {}
-          if (assigned == null || Number.isNaN(assigned)) {
-            const url = new URL(DEFAULT_APPS_URL);
-            url.searchParams.set('mode', 'assignIds');
-            const data = await jsonp(url.toString());
-            if (data && typeof data.assigned === 'number') assigned = data.assigned;
-          }
+          const url = new URL(DEFAULT_APPS_URL);
+          url.searchParams.set('mode', 'assignIds');
+          const data = await jsonp(url.toString());
+          const assigned = data && typeof data.assigned === 'number' ? data.assigned : null;
           alert(typeof assigned === 'number' ? `Assegnati ${assigned} ID` : 'Assegnazione ID completata');
           await loadAll();
         } catch (e) {
