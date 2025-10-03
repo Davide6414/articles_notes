@@ -290,21 +290,20 @@
             const noteHtml = noteText ? `<div class="meta"><b>Nota:</b> ${escapeHtml(noteText)}</div>` : '';
 
             div.innerHTML = `
-              ${left}
-              <div>
-                <div><b>Sezione: ${escapeHtml(String(item.Type || 'Senza tipo'))}</b></div>
-                <div class="meta">DOI: ${escapeHtml(String(item.DOI||''))}</div>
-                <div>${escapeHtml(String(item.Text||''))}</div>
-                ${tagsHtml}
-                <div class="meta">${a}</div>
-                ${noteHtml}
-                <div class="meta">ID: <code>${escapeHtml(id || '(manca)')}</code></div>
-                <div class="meta">Linked IDs: ${escapeHtml(linked)}</div>
-                <div class="meta" style="margin-top:8px; display:flex; gap:8px; align-items:center;">
-                  <button class="btn" data-open-linker ${id?'':'disabled'}>${id? 'Linka…' : 'Genera ID per abilitare'}</button>
-                </div>
+              <div><b>Sezione: ${escapeHtml(String(item.Type || 'Senza tipo'))}</b></div>
+              <div class="meta">DOI: ${escapeHtml(String(item.DOI||''))}</div>
+              <div>${escapeHtml(String(item.Text||''))}</div>
+              ${tags.length ? `<div class="tags">${tags.map(t=>`<span class="tag">${escapeHtml(t)}</span>`).join('')}</div>` : ''}
+              <div class="meta">${a}</div>
+              <div class="meta">ID: <code>${escapeHtml(id || '(manca)')}</code></div>
+              <div class="meta">Linked IDs: ${escapeHtml(linked)}</div>
+              <div class="meta" style="margin-top:8px; display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                <button class="btn" data-open-linker ${id?'':'disabled'}>${id? 'Linka…' : 'Genera ID per abilitare'}</button>
+                ${id ? `<a class="btn" href="linked.html?id=${encodeURIComponent(id)}" target="_blank" rel="noopener">Visualizza linked</a>` 
+                     : `<button class="btn" disabled>Visualizza linked</button>`}
               </div>
             `;
+
             const openBtn = div.querySelector('[data-open-linker]');
             if (openBtn) openBtn.onclick = () => openLinkWidget(item);
             box.appendChild(div);
