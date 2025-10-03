@@ -55,6 +55,13 @@
       .muted { color:#6b7280; font-size:12px; }
       .selected-list { display:flex; flex-direction:column; gap:6px; margin-top:8px; }
       .pill { display:inline-block; font-size:12px; padding:4px 8px; border-radius:999px; background:#eef6ff; border:1px solid #cbd5e1; }
+
+      /* Toast notifications */
+      .toast-container{position:fixed; top:16px; right:16px; display:flex; flex-direction:column; gap:8px; z-index:100000;}
+      .toast{min-width:240px; max-width:360px; background:#fff; border:1px solid #cbd5e1; border-left:4px solid var(--accent2); box-shadow:0 4px 16px rgba(0,0,0,.15); padding:10px 12px; border-radius:10px; font-size:13px; color:var(--text);}
+      .toast.ok{border-left-color:#16a34a;}
+      .toast.err{border-left-color:#dc2626;}
+      .toast.info{border-left-color:var(--accent2);}
     </style>
   </head>
   <body>
@@ -119,6 +126,9 @@
       </div>
     </div>
 
+    <!-- Toast container -->
+    <div id="toastContainer" class="toast-container" aria-live="polite" aria-atomic="true"></div>
+
     <script>
       const DEFAULT_APPS_URL = "https://script.google.com/macros/s/AKfycbyRXsW2jhj_NarPEyX5T8Yqf8U05qrZtPWReMwC9oW4dHTqXegnZhUmCwuYVmMXZ1uX/exec";
       const state = { notes: [], data: [] };
@@ -169,7 +179,7 @@
             renderData();
           } catch (e2) {
             console.error('Errore caricamento dati:', e2);
-            alert('Errore nel recupero dati dal server.');
+            showToast('Errore nel recupero dati dal server', 'err', 5000);
           }
         }
       }
@@ -394,6 +404,20 @@
         });
       }
 
+      // ---- Toast helper ----
+      function showToast(message, kind='info', timeout=3000){
+        try{
+          const c = document.getElementById('toastContainer');
+          if(!c) return alert(message);
+          const el = document.createElement('div');
+          el.className = 'toast ' + (kind||'info');
+          el.textContent = String(message);
+          c.appendChild(el);
+          const t = setTimeout(()=>{ try{ el.remove(); }catch{} }, timeout||3000);
+          el.addEventListener('click', ()=>{ clearTimeout(t); try{ el.remove(); }catch{} });
+        }catch(e){ console.warn('toast error', e); }
+      }
+
       // ---- Genera ID (server) ----
       async function generateIds() {
         try {
@@ -402,20 +426,28 @@
           url.searchParams.set('mode', 'assignIds');
           const data = await jsonp(url.toString());
           const assigned = data && typeof data.assigned === 'number' ? data.assigned : null;
-          alert(typeof assigned === 'number' ? `Assegnati ${assigned} ID` : 'Assegnazione ID completata');
+          showToast(typeof assigned === 'number' ? `Assegnati ${assigned} ID` : 'Assegnazione ID completata', 'ok', 3500);
           await loadAll();
         } catch (e) {
           console.error('Errore generateIds', e);
-          alert('Errore durante la generazione degli ID');
+          showToast('Errore durante la generazione degli ID', 'err', 5000);
         }
       }
 
-      // ---- Link widget logic (client + persistenza server) ----
-      let linkOrigin = null; // oggetto nota sorgente
+      // ---- Link widget logic con selezione persistente ----
+      let linkOrigin = null;          // nota sorgente
+      let linkSelection = new Set();  // insieme persistente degli ID selezionati
 
       function openLinkWidget(item){
         if (!item || !item.ID) return;
         linkOrigin = item;
+
+        // inizializza selezione con gli eventuali link già presenti
+        linkSelection = new Set(
+          String(item.LinkedIDs || '')
+            .split(',').map(s=>s.trim()).filter(Boolean)
+        );
+
         document.getElementById('lwSourceId').textContent = String(item.ID);
         document.getElementById('lwSearch').value = '';
         renderLinkList();
@@ -430,20 +462,14 @@
         document.getElementById('lwSelected').innerHTML = '';
         document.getElementById('lwCount').textContent = '0';
         linkOrigin = null;
+        linkSelection.clear();
       }
 
       function renderLinkList(){
         const q = document.getElementById('lwSearch').value.trim().toLowerCase();
         const list = document.getElementById('lwList');
-        const selectedBox = document.getElementById('lwSelected');
-        const selected = new Set();
-
-        // pre-selezione dagli attuali LinkedIDs della sorgente
-        const pre = String(linkOrigin && linkOrigin.LinkedIDs || '')
-          .split(',').map(s=>s.trim()).filter(Boolean);
-        pre.forEach(id => selected.add(id));
-
         list.innerHTML = '';
+
         state.notes.forEach(n=>{
           const id = String(n.ID || '');
           if (!id) return;
@@ -452,7 +478,7 @@
           const hay = [n.Title,n.Text,n.Tags].map(x=>String(x||'').toLowerCase()).join(' ');
           if(q && !hay.includes(q)) return;
 
-          const checkedAttr = selected.has(id) ? 'checked' : '';
+          const checkedAttr = linkSelection.has(id) ? 'checked' : '';
           const tagsHtml = String(n.Tags||'').split(',')
             .map(t=>t.trim()).filter(Boolean)
             .map(t=>`<span class="tag">${escapeHtml(t)}</span>`).join(' ');
@@ -472,14 +498,21 @@
           list.appendChild(div);
         });
 
+        // delega eventi: aggiorna Set senza perdere stato tra re-render (es. ricerca)
+        list.onchange = (e)=>{
+          const t = e.target;
+          if (t && t.classList && t.classList.contains('lw-check')) {
+            const id = String(t.value);
+            if (t.checked) linkSelection.add(id); else linkSelection.delete(id);
+            updateSelectedPreview();
+          }
+        };
+
         updateSelectedPreview();
-        list.addEventListener('change', updateSelectedPreview, { once:true });
       }
 
       function updateSelectedPreview(){
-        const boxes = document.querySelectorAll('#lwList .lw-check');
-        const sel = [];
-        boxes.forEach(cb => { if (cb.checked) sel.push(cb.value); });
+        const sel = Array.from(linkSelection);
         document.getElementById('lwCount').textContent = String(sel.length);
         const selBox = document.getElementById('lwSelected');
         selBox.innerHTML = sel.map(id=>`<span class="pill">ID ${escapeHtml(id)}</span>`).join(' ');
@@ -487,8 +520,9 @@
 
       async function confirmLink(){
         if (!linkOrigin || !linkOrigin.ID) { closeLinkWidget(); return; }
-        const checked = Array.from(document.querySelectorAll('#lwList .lw-check:checked'))
-          .map(cb => cb.value).filter(Boolean);
+        const checked = Array.from(linkSelection);
+
+        showToast('Invio dei link al server…', 'info', 2000);
 
         try {
           const url = new URL(DEFAULT_APPS_URL);
@@ -496,15 +530,18 @@
           url.searchParams.set('id', String(linkOrigin.ID));
           url.searchParams.set('linkedIds', checked.join(','));
           const res = await jsonp(url.toString());
+
           if (!res || res.ok !== true) {
-            alert('Errore nell’aggiornamento link sul server');
+            showToast('Errore: risposta non valida dal server', 'err', 5000);
             return;
           }
-          await loadAll(); // ricarica dallo Sheet per vedere anche i backlink
+
+          await loadAll(); // ricarica, include i backlink creati lato server
           closeLinkWidget();
+          showToast('Link salvati sul server', 'ok', 3500);
         } catch (err) {
           console.error('confirmLink error', err);
-          alert('Errore di rete durante il salvataggio dei link');
+          showToast('Errore di rete durante il salvataggio', 'err', 5000);
         }
       }
     </script>
