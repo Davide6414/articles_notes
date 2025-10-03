@@ -52,6 +52,7 @@
     }
     .node.center{border:1px solid #fff; box-shadow:0 12px 28px #000c}
     .node .title{font-weight:800; font-size:14px; line-height:1.2}
+    .node .text{margin-top:4px; font-size:13px; color:#bcd}
     .node .meta{color:var(--muted); font-size:12px; margin-top:6px}
     .node .tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
     .node .tag{font-size:11px;background:#1e293b;color:#dbe5f2;border:1px solid #324256;padding:2px 6px;border-radius:10px}
@@ -126,7 +127,7 @@
       window.addEventListener('mouseup',()=>{ isPanning=false; document.getElementById('viewport').classList.remove('grabbing'); });
       window.addEventListener('mousemove',(e)=>{ if(!isPanning) return; const dx=e.clientX-panStart.x, dy=e.clientY-panStart.y; offsetX=panOrigin.x+dx; offsetY=panOrigin.y+dy; applyTransform(); });
 
-      // Wheel zoom (ctrl/trackpad friendly)
+      // Wheel zoom
       vp.addEventListener('wheel',(e)=>{
         e.preventDefault();
         const delta = Math.sign(e.deltaY);
@@ -161,12 +162,10 @@
     }
     function fitToContent(){
       if(!state.nodes.length) return;
-      // bounding box in stage coordinates
       const xs=state.nodes.map(n=>n.x), ys=state.nodes.map(n=>n.y);
       const minX=Math.min(...xs)-200, maxX=Math.max(...xs)+200;
       const minY=Math.min(...ys)-200, maxY=Math.max(...ys)+200;
       const contentW=maxX-minX, contentH=maxY-minY;
-
       const vp=document.getElementById('viewport');
       const rect=vp.getBoundingClientRect();
       const s=clamp(Math.min(rect.width/contentW, rect.height/contentH), 0.25, 3.5);
@@ -177,7 +176,7 @@
     }
     function clamp(v,min,max){ return Math.max(min, Math.min(max,v)); }
 
-    // --- Data Loading (fetch + JSONP fallback)
+    // --- Data Loading
     async function loadAll(){
       showToast('Caricamento dati…','info',1500);
       try{
@@ -227,7 +226,6 @@
       const sourceId = new URLSearchParams(location.search).get('id');
       state.focusedId = sourceId && state.map.has(sourceId) ? sourceId : null;
       if(!state.focusedId){
-        // pick first note with links if not provided
         const candidate = state.notes.find(n => String(n.LinkedIDs||'').trim());
         state.focusedId = candidate && candidate.ID ? String(candidate.ID) : (state.notes[0]?.ID ? String(state.notes[0].ID) : null);
       }
@@ -237,18 +235,15 @@
     function buildStarGraph(centerId){
       state.nodes=[]; state.edges=[];
       if(!centerId || !state.map.has(centerId)) return;
-
       const center = state.map.get(centerId);
       const C = { id:String(centerId), title:center.Title||'(senza titolo)', note:center.Note||'', text:center.Text||'',
                   doi:center.DOI||'', tags:String(center.Tags||'').split(',').map(s=>s.trim()).filter(Boolean),
                   img:center.ImageLink||'', link:center.Link||center.URL||'', type:center.Type||'',
                   x:1500, y:1500, center:true };
       state.nodes.push(C);
-
       const linkedIds = String(center.LinkedIDs||'').split(',').map(s=>s.trim()).filter(Boolean);
       const angles = linkedIds.length>0 ? linkedIds.map((_,i)=> i*(2*Math.PI/linkedIds.length)) : [];
       const radius = 380;
-
       linkedIds.forEach((lid, idx)=>{
         if(!state.map.has(lid)) return;
         const n = state.map.get(lid);
@@ -271,8 +266,6 @@
       const nodesLayer=document.getElementById('nodes');
       const edgesSvg=document.getElementById('edges');
       nodesLayer.innerHTML=''; edgesSvg.innerHTML='';
-
-      // edges
       for(const e of state.edges){
         const A = state.nodes.find(n=>n.id===e.a);
         const B = state.nodes.find(n=>n.id===e.b);
@@ -283,21 +276,19 @@
         line.setAttribute('x2',B.x); line.setAttribute('y2',B.y);
         edgesSvg.appendChild(line);
       }
-
-      // nodes
       for(const n of state.nodes){
         const el=document.createElement('div'); el.className='node'+(n.center?' center':'');
+
         el.style.left = n.x+'px'; el.style.top = n.y+'px';
         el.setAttribute('data-id', n.id);
-
         const tagsHtml = n.tags.map(t=>`<span class="tag">${escapeHtml(t)}</span>`).join(' ');
         const imgHtml  = n.img ? `<img class="thumb" src="${escapeAttr(n.img)}" alt="thumb ${escapeAttr(n.id)}">`
                                : `<div class="noimg">no img</div>`;
         const linkHtml = n.link ? `<a class="btn" href="${escapeAttr(n.link)}" target="_blank" rel="noopener">Apri sorgente</a>` : '';
         const linkedHtml = `<a class="btn" href="?id=${encodeURIComponent(n.id)}">Apri collegati</a>`;
-
         el.innerHTML = `
           <div class="title">${escapeHtml(n.title)}</div>
+          ${n.text?`<div class="text">${escapeHtml(n.text)}</div>`:''}
           <div class="meta">ID: <code>${escapeHtml(n.id)}</code>${n.doi?` · DOI: ${escapeHtml(n.doi)}`:''}</div>
           ${tagsHtml?`<div class="tags">${tagsHtml}</div>`:''}
           ${n.note?`<div class="note"><b>Nota:</b> ${escapeHtml(n.note)}</div>`:''}
@@ -315,20 +306,15 @@
     function filterHighlight(){
       const q = document.getElementById('search').value.trim().toLowerCase();
       const nodes = document.querySelectorAll('.node');
-      nodes.forEach(n=>{
-        n.style.borderColor = n.classList.contains('center') ? '#fff' : 'var(--nodeBorder)';
-      });
+      nodes.forEach(n=>{ n.style.borderColor = n.classList.contains('center') ? '#fff' : 'var(--nodeBorder)'; });
       const lines = document.querySelectorAll('line.edge');
       lines.forEach(l=> l.setAttribute('stroke','var(--edge)'));
-
       if(!q) return;
-      // highlight matching titles/tags/note/text
       for(const n of state.nodes){
         const hay = [n.title, n.note, n.text, n.tags.join(' ')].join(' ').toLowerCase();
         if(hay.includes(q)){
           const el = document.querySelector(`.node[data-id="${cssEscape(n.id)}"]`);
           if(el) el.style.borderColor = '#93c5fd';
-          // strengthen edges touching
           for(const e of state.edges){
             if(e.a===n.id || e.b===n.id){
               const A = state.nodes.find(nn=>nn.id===e.a);
@@ -356,7 +342,6 @@
     function escapeHtml(str){ return String(str).replace(/[&<>"']/g,s=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s])); }
     function escapeAttr(str){ return escapeHtml(str).replace(/"/g,'&quot;'); }
     function cssEscape(s){ return s.replace(/"/g,'\\"').replace(/\\/g,'\\\\'); }
-
     function showToast(message,kind='info',timeout=3000){
       try{
         const c=document.getElementById('toastContainer'); if(!c) return;
