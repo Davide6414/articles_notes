@@ -74,7 +74,7 @@
       /* BANDS: ogni .group è una banda piena larghezza; dentro, griglia uniforme di note */
       .groups {
         display: flex;
-        flex-direction: column;     /* articoli impilati verticalmente in bande */
+        flex-direction: column;     
         gap: 22px;
         width: 100%;
       }
@@ -98,14 +98,13 @@
         background: #ffffff2b; border: 1px solid #ffffff55; border-radius: 999px;
       }
 
-      /* Griglia uniforme di note all’interno della banda */
       .items-grid{
         display:grid;
-        grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); /* riempi orizzontalmente tutta la banda */
-        grid-auto-rows: 1fr;          /* altezze uniformi per riga */
+        grid-template-columns:repeat(auto-fill,minmax(260px,1fr));
+        grid-auto-rows: 1fr;          
         gap:14px;
         padding:12px;
-        align-items: stretch;         /* tutte le card stessa altezza in riga */
+        align-items: stretch;         
       }
 
       .note-card{
@@ -116,17 +115,14 @@
         overflow:hidden;
         display:flex;
         flex-direction:column;
-        height:100%;                  /* riempi la cella */
+        height:100%;                  
       }
       .note-card:hover{ transform:translateY(-2px); box-shadow:0 8px 22px rgba(0,0,0,.09); }
-      .note-card .thumb,
-      .note-card .noimg{ width:100%; height:140px; border-radius:0; margin:0; }
-      .note-card .noimg{ border-style:dashed; display:flex;align-items:center;justify-content:center;color:#94a3b8;background:#f8fafc }
+      .note-card .thumb{ width:100%; height:140px; border-radius:0; margin:0; object-fit:cover }
       .note-card .card-body{ padding:12px; display:flex; flex-direction:column; gap:6px; flex:1; }
-      .note-card .title-row{ font-size:14px; font-weight:700; line-height:1.25 }
-      .note-card .type{ font-size:11px; font-weight:800; color:#2563eb; text-transform:uppercase; letter-spacing:.3px }
-      .note-card .meta{ color:#6b7280; font-size:12px }
-      .note-card .fulltext{ font-size:13px; color:#0f172a }
+      .note-card .type{ font-size:12px; font-weight:800; padding:3px 6px; border-radius:6px; color:#fff; display:inline-block }
+      .note-card .fulltext{ font-size:15px; color:#0f172a; line-height:1.4 }
+      .note-card .note-highlight{ background:#fff8c5; padding:6px 8px; border-radius:8px; font-size:15px; font-weight:500; }
       .note-card .tags{ display:flex; gap:6px; flex-wrap:wrap }
       .note-card .tag{ font-size:11px; color:#0b1220; background:#ecfeff; padding:3px 8px; border-radius:999px; border:1px solid #bae6fd }
       .note-card .actions-row{ margin:0 12px 12px; display:flex; gap:8px; flex-wrap:wrap }
@@ -135,15 +131,13 @@
       .note-card .btn.primary{ background:#2563eb; color:#fff; border-color:#2563eb }
       .note-card.collapsed .fulltext,
       .note-card.collapsed .linkwrap,
-      .note-card.collapsed .ids{ display:none }
+      .note-card.collapsed .note-highlight { display:none }
 
       .clamp-2 { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
       .clamp-3 { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; }
 
       .linkwrap a { color: #0ea5e9; text-decoration: none; font-weight: 700; }
       .linkwrap a:hover { text-decoration: underline; }
-
-      .ids { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
 
       .btn {
         padding: 8px 14px; border-radius: 10px; border: 1px solid var(--border-strong);
@@ -173,24 +167,6 @@
         width: 100%; max-height: 320px; object-fit: cover; border-radius: 12px; border: 1px solid var(--border);
         background: #f7fafc; margin-bottom: 10px;
       }
-
-      /* Link widget */
-      .link-widget {
-        width: min(1100px, 96vw); height: min(78vh, 820px);
-        background: #fff; border-radius: 16px; overflow: hidden;
-        box-shadow: 0 14px 40px rgba(2,6,23,.36); display: grid; grid-template-columns: 1.2fr .8fr;
-      }
-      .lw-header { grid-column: 1 / span 2; padding: 12px 14px; background: linear-gradient(90deg, var(--accent), var(--accent2)); color: #fff; display: flex; align-items: center; gap: 8px; }
-      .lw-header b { flex: 1; }
-      .lw-left { border-right: 1px solid var(--border); padding: 10px; overflow: auto; }
-      .lw-right { padding: 10px; overflow: auto; display: flex; flex-direction: column; }
-      .lw-search { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; background: #fff; }
-      .lw-list { margin-top: 10px; }
-      .lw-item { border-bottom: 1px solid #eef3f6; padding: 10px; }
-      .lw-item:hover { background: #f8fafc; }
-      .muted { color: #6b7280; font-size: 12px; }
-      .selected-list { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
-      .pill { display: inline-block; font-size: 12px; padding: 4px 8px; border-radius: 999px; background: #eef6ff; border: 1px solid var(--border-strong); }
 
       /* Toast */
       .toast-container { position: fixed; top: 16px; right: 16px; display: flex; flex-direction: column; gap: 8px; z-index: 100000; }
@@ -236,31 +212,6 @@
       </section>
     </main>
 
-    <!-- Overlay: Widget di linking -->
-    <div id="linkOverlay" class="overlay" role="dialog" aria-modal="true" aria-label="Seleziona note da linkare">
-      <div class="link-widget">
-        <div class="lw-header">
-          <b>Seleziona note da linkare</b>
-          <button class="btn" id="lwCloseBtn" type="button">Chiudi</button>
-        </div>
-        <div class="lw-left">
-          <input id="lwSearch" class="lw-search" placeholder="Cerca per titolo, testo, tag o note…" />
-          <div id="lwList" class="lw-list"></div>
-        </div>
-        <div class="lw-right">
-          <div>
-            <div class="muted">Sorgente: <code id="lwSourceId"></code></div>
-            <div class="muted" style="margin-top:6px;">Selezionati: <b id="lwCount">0</b></div>
-            <div id="lwSelected" class="selected-list"></div>
-          </div>
-          <div class="actions-row">
-            <button class="btn" id="lwCancelBtn" type="button">Annulla</button>
-            <button class="btn primary" id="lwConfirmBtn" type="button">Linka</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
     <!-- Overlay: Dettaglio singola nota -->
     <div id="detailOverlay" class="overlay" role="dialog" aria-modal="true" aria-label="Dettagli nota">
       <div class="sheet">
@@ -271,7 +222,6 @@
         <div id="detBody">
           <img id="detImg" class="imgwide" alt="" style="display:none">
           <div class="grid" style="margin-top:10px">
-            <div class="kv k">ID</div><div class="kv v" id="detId"></div>
             <div class="kv k">DOI</div><div class="kv v" id="detDoi"></div>
             <div class="kv k">Type</div><div class="kv v" id="detType"></div>
             <div class="kv k">Tags</div><div class="kv v" id="detTags"></div>
@@ -280,7 +230,7 @@
           </div>
           <div style="margin-top:12px">
             <div class="kv k">Testo</div>
-            <div class="kv v" id="detText" style="margin-top:6px"></div>
+            <div class="kv v" id="detText" style="margin-top:6px;font-size:15px;line-height:1.4"></div>
           </div>
         </div>
       </div>
@@ -298,24 +248,17 @@
       document.addEventListener('DOMContentLoaded',()=>{
         document.getElementById('tabNotes').onclick=()=>switchTab('notes');
         document.getElementById('tabData').onclick=()=>switchTab('data');
-
         document.getElementById('notesSearch').oninput=renderNotes;
         document.getElementById('notesTypeFilter').onchange=renderNotes;
         document.getElementById('notesTagFilter').onchange=renderNotes;
         document.getElementById('dataSearch').oninput=renderData;
         document.getElementById('dataVarFilter').onchange=renderData;
-
         document.getElementById('notesExportCsv').onclick=exportNotesCsv;
         document.getElementById('dataExportCsv').onclick=exportDataCsv;
         const genBtn=document.getElementById('generateIdsBtn'); if(genBtn) genBtn.onclick=generateIds;
         document.getElementById('toggleAllCollapseBtn').onclick=toggleAllCollapsed;
-
-        document.getElementById('lwCloseBtn').onclick=closeLinkWidget;
-        document.getElementById('lwCancelBtn').onclick=closeLinkWidget;
-        document.getElementById('lwConfirmBtn').onclick=confirmLink;
         document.getElementById('detCloseBtn').onclick=closeDetail;
-        document.addEventListener('keydown',(e)=>{ if(e.key==='Escape'){ closeLinkWidget(); closeDetail(); } });
-
+        document.addEventListener('keydown',(e)=>{ if(e.key==='Escape'){ closeDetail(); } });
         loadAll();
       });
 
@@ -334,308 +277,132 @@
         populateFilters(); renderNotes(); renderData();
       }
 
-      function switchTab(which){
-        const nBtn=document.getElementById('tabNotes'), dBtn=document.getElementById('tabData');
-        const nPanel=document.getElementById('notesPanel'), dPanel=document.getElementById('dataPanel');
-        if(which==='data'){
-          nBtn.classList.remove('active'); nBtn.setAttribute('aria-selected','false');
-          dBtn.classList.add('active'); dBtn.setAttribute('aria-selected','true');
-          nPanel.style.display='none'; dPanel.style.display='';
-        } else {
-          dBtn.classList.remove('active'); dBtn.setAttribute('aria-selected','false');
-          nBtn.classList.add('active'); nBtn.setAttribute('aria-selected','true');
-          dPanel.style.display='none'; nPanel.style.display='';
-        }
+      function jsonp(url){ return new Promise((resolve,reject)=>{ const cb='cb'+Math.random().toString(36).substr(2,8);
+        const s=document.createElement('script'); s.src=url+'&callback='+cb; s.onerror=reject;
+        window[cb]=(data)=>{ delete window[cb]; document.body.removeChild(s); resolve(data); };
+        document.body.appendChild(s); }); }
+
+      function switchTab(t){ if(t==='notes'){ document.getElementById('notesPanel').style.display='block';
+        document.getElementById('dataPanel').style.display='none'; document.getElementById('tabNotes').classList.add('active');
+        document.getElementById('tabData').classList.remove('active'); }
+        else { document.getElementById('notesPanel').style.display='none';
+        document.getElementById('dataPanel').style.display='block'; document.getElementById('tabNotes').classList.remove('active');
+        document.getElementById('tabData').classList.add('active'); } }
+
+      function populateFilters(){ const types=[...new Set(state.notes.map(n=>n.Type).filter(Boolean))];
+        const tags=[...new Set(state.notes.flatMap(n=> (n.Tags||"").split(/\s*,\s*/).filter(Boolean)))];
+        const varnames=[...new Set(state.data.map(d=>d.Variable).filter(Boolean))];
+        fillSelect('notesTypeFilter',['',...types]); fillSelect('notesTagFilter',['',...tags]); fillSelect('dataVarFilter',['',...varnames]); }
+      function fillSelect(id,vals){ const sel=document.getElementById(id); if(!sel)return; sel.innerHTML='';
+        for(const v of vals){ const opt=document.createElement('option'); opt.value=v; opt.textContent=v||'(tutti)'; sel.appendChild(opt);} }
+
+      const typeColors=new Map();
+      function getTypeColor(type){
+        if(typeColors.has(type)) return typeColors.get(type);
+        const hue=Math.floor(Math.random()*360);
+        const color=`hsl(${hue},70%,45%)`;
+        typeColors.set(type,color); return color;
       }
 
-      function populateFilters(){
-        const typeSet=new Set(); state.notes.forEach(n=>{ if(n.Type) typeSet.add(String(n.Type)); });
-        document.getElementById('notesTypeFilter').innerHTML='<option value="">Tutti i type</option>'+Array.from(typeSet).sort().map(t=>`<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join('');
-
-        const tagSet=new Set();
-        state.notes.forEach(n=>{ String(n.Tags||'').split(',').forEach(t=>{ const v=t.trim(); if(v) tagSet.add(v); }); });
-        document.getElementById('notesTagFilter').innerHTML='<option value="">Tutti i tag</option>'+Array.from(tagSet).sort((a,b)=>a.localeCompare(b,'it',{sensitivity:'base'})).map(t=>`<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join('');
-
-        const varSet=new Set(); state.data.forEach(d=>{ if(d.Variable) varSet.add(String(d.Variable)); });
-        document.getElementById('dataVarFilter').innerHTML='<option value="">Tutte le variabili</option>'+Array.from(varSet).sort().map(v=>`<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join('');
-      }
-
-      function getFilteredNotes(){
-        const search=document.getElementById('notesSearch').value.trim().toLowerCase();
-        const typeFilter=document.getElementById('notesTypeFilter').value;
-        const tagFilter=document.getElementById('notesTagFilter').value;
-        return state.notes.filter(n=>{
-          if(typeFilter && String(n.Type)!==typeFilter) return false;
-          if(tagFilter){
-            const tags=String(n.Tags||'').split(',').map(t=>t.trim().toLowerCase()).filter(Boolean);
-            if(!tags.includes(tagFilter.toLowerCase())) return false;
-          }
-          if(!search) return true;
-          const hay=[n.Title,n.DOI,n.Text,n.URL,n.Link,n.Tags,n.Note,n.ImageLink].map(x=>String(x||'').toLowerCase()).join(' ');
-          return hay.includes(search);
-        });
-      }
-
-      function getFilteredData(){
-        const search=document.getElementById('dataSearch').value.trim().toLowerCase();
-        const varFilter=document.getElementById('dataVarFilter').value;
-        return state.data.filter(d=>{
-          if(varFilter && String(d.Variable)!==varFilter) return false;
-          if(!search) return true;
-          const hay=[d.Variable,d.DOI,d.URL,d.Notes,d.Unit].map(x=>String(x||'').toLowerCase()).join(' ');
-          return hay.includes(search);
-        });
-      }
-
-      /* RENDER NOTES: ogni articolo = banda orizzontale a tutta larghezza; dentro griglia uniforme */
       function renderNotes(){
-        const filtered=getFilteredNotes();
-        const groups=groupBy(filtered,x=>String(x.DOI||'Senza DOI'));
-        const container=document.getElementById('notesGroups'); container.innerHTML='';
-
-        Object.keys(groups).sort().forEach(doi=>{
-          const items=groups[doi];
-          const title=items[0].Title||doi||'Senza titolo';
-
-          const box=document.createElement('div'); box.className='group';
-          box.innerHTML=`<h3><span class="clamp-2" style="max-width:82%">${escapeHtml(title)}</span> <span class="meta">${items.length}</span></h3>`;
-
+        const q=document.getElementById('notesSearch').value.toLowerCase();
+        const t=document.getElementById('notesTypeFilter').value;
+        const tagf=document.getElementById('notesTagFilter').value;
+        let notes=state.notes;
+        if(q) notes=notes.filter(n=> (n.Title||'').toLowerCase().includes(q)||(n.DOI||'').toLowerCase().includes(q)||(n.Text||'').toLowerCase().includes(q));
+        if(t) notes=notes.filter(n=>n.Type===t);
+        if(tagf) notes=notes.filter(n=>(n.Tags||'').split(/\s*,\s*/).includes(tagf));
+        const groups=groupBy(notes,n=>n.DOI||'(senza DOI)'); const container=document.getElementById('notesGroups'); container.innerHTML='';
+        for(const [doi,arr] of groups){
+          const g=document.createElement('div'); g.className='group'; const h3=document.createElement('h3');
+          h3.textContent=doi; const m=document.createElement('span'); m.className='meta'; m.textContent=`${arr.length} note`; h3.appendChild(m); g.appendChild(h3);
           const grid=document.createElement('div'); grid.className='items-grid';
-
-          items.forEach(item=>{
-            const id=String(item.ID||''); const linked=String(item.LinkedIDs||'');
-            const tags=String(item.Tags||'').split(',').map(t=>t.trim()).filter(Boolean);
-            const link=String(item.Link||item.URL||'');
-            const noteText=String(item.Note||''); const img=String(item.ImageLink||'');
-
-            const card=document.createElement('div');
-            card.className='note-card'+(collapsed.has(id)||collapseAll?' collapsed':'');
-            card.setAttribute('data-id', id);
-
-            const imgHtml = img
-              ? `<img class="thumb" src="${escapeAttr(img)}" alt="img ${escapeAttr(id)}">`
-              : `<div class="noimg">no img</div>`;
-
-            card.innerHTML = `
+          for(const item of arr){
+            const id=item.ID||''; const img=item.Img||''; const noteText=item.Note||''; const link=item.Link||'';
+            const tags=(item.Tags||'').split(/\s*,\s*/).filter(Boolean);
+            const card=document.createElement('div'); card.className='note-card'; if(collapsed.has(id)||collapseAll) card.classList.add('collapsed');
+            const imgHtml=img?`<img class="thumb" src="${escapeAttr(img)}" alt="img ${escapeAttr(id)}">`:'';
+            card.innerHTML=`
               ${imgHtml}
               <div class="card-body">
-                <div class="title-row">
-                  <span class="type">${escapeHtml(String(item.Type||'SENZA TIPO'))}</span>
-                  <span> — ${escapeHtml(item.Title||'(senza titolo)')}</span>
-                </div>
+                <span class="type" style="background:${getTypeColor(String(item.Type||'SENZA TIPO'))}">${escapeHtml(String(item.Type||'SENZA TIPO'))}</span>
                 <div class="meta">DOI: ${escapeHtml(String(item.DOI||''))}</div>
                 <div class="fulltext clamp-3">${escapeHtml(String(item.Text||''))}</div>
                 ${tags.length?`<div class="tags">${tags.map(t=>`<span class="tag">${escapeHtml(t)}</span>`).join('')}</div>`:''}
-                ${noteText?`<div class="meta"><b>Nota:</b> ${escapeHtml(noteText)}</div>`:''}
+                ${noteText?`<div class="note-highlight"><b>Nota:</b> ${escapeHtml(noteText)}</div>`:''}
                 <div class="linkwrap meta">${link?`<a href="${escapeAttr(link)}" target="_blank" rel="noopener">Apri sorgente</a>`:''}</div>
-                <div class="ids meta">ID: <code>${escapeHtml(id||'(manca)')}</code> · Linked: ${escapeHtml(linked)}</div>
               </div>
               <div class="actions-row">
-                <button class="btn" data-open-linker ${id?'':'disabled'}>${id?'Linka…':'Genera ID per abilitare'}</button>
-                ${id?`<a class="btn" href="linked.html?id=${encodeURIComponent(id)}" target="_blank" rel="noopener">Visualizza linked</a>`:`<button class="btn" disabled>Visualizza linked</button>`}
-                ${id?`<button class="btn" data-details="${escapeAttr(id)}">Dettagli</button>`:`<button class="btn" disabled>Dettagli</button>`}
-                ${id?`<button class="btn" data-collapse="${escapeAttr(id)}">${(collapsed.has(id)||collapseAll)?'Espandi':'Compatta'}</button>`:`<button class="btn" disabled>Compatta</button>`}
+                ${link?`<a class="btn" href="${escapeAttr(link)}" target="_blank" rel="noopener">Vai all’articolo</a>`:''}
+                <button class="btn" data-details="${escapeAttr(id)}">Dettagli</button>
+                <button class="btn" data-collapse="${escapeAttr(id)}">${(collapsed.has(id)||collapseAll)?'Espandi':'Compatta'}</button>
               </div>`;
-
-            const openBtn=card.querySelector('[data-open-linker]'); if(openBtn) openBtn.onclick=()=>openLinkWidget(item);
-            const detBtn =card.querySelector('[data-details]');   if(detBtn)  detBtn.onclick=()=>openDetail(item);
-            const colBtn =card.querySelector('[data-collapse]');  if(colBtn)  colBtn.onclick=(e)=>toggleCollapsed(id,e.currentTarget,card);
-
             grid.appendChild(card);
-          });
-
-          box.appendChild(grid);
-          container.appendChild(box);
-        });
-      }
-
-      function toggleCollapsed(id, btn, itemEl){
-        if(collapseAll){ collapseAll=false; collapsed.clear(); }
-        else{ if(collapsed.has(id)) collapsed.delete(id); else collapsed.add(id); }
-        if(itemEl){
-          itemEl.classList.toggle('collapsed', collapsed.has(id));
-          btn.textContent = itemEl.classList.contains('collapsed') ? 'Espandi' : 'Compatta';
-        }else{
-          renderNotes();
+          }
+          g.appendChild(grid); container.appendChild(g);
         }
-      }
-
-      function toggleAllCollapsed(){
-        collapseAll=!collapseAll;
-        if(collapseAll){
-          collapsed.clear();
-          getFilteredNotes().forEach(n=>{ if(n.ID) collapsed.add(String(n.ID)); });
-        }else{
-          collapsed.clear();
-        }
-        renderNotes();
+        container.querySelectorAll('[data-details]').forEach(b=>b.onclick=()=>openDetail(b.dataset.details));
+        container.querySelectorAll('[data-collapse]').forEach(b=>b.onclick=()=>toggleCollapsed(b.dataset.collapse));
       }
 
       function renderData(){
-        const filtered=getFilteredData();
-        const groups=groupBy(filtered,x=>String(x.Variable||'Senza variabile'));
-        const container=document.getElementById('dataGroups'); container.innerHTML='';
-        Object.keys(groups).sort().forEach(variable=>{
-          const box=document.createElement('div'); box.className='group';
-          box.innerHTML=`<h3><span>${escapeHtml(variable)}</span> <span class="meta">${groups[variable].length}</span></h3>`;
+        const q=document.getElementById('dataSearch').value.toLowerCase();
+        const varf=document.getElementById('dataVarFilter').value;
+        let data=state.data;
+        if(q) data=data.filter(d=>(d.Variable||'').toLowerCase().includes(q)||(d.DOI||'').toLowerCase().includes(q));
+        if(varf) data=data.filter(d=>d.Variable===varf);
+        const groups=groupBy(data,d=>d.DOI||'(senza DOI)'); const container=document.getElementById('dataGroups'); container.innerHTML='';
+        for(const [doi,arr] of groups){
+          const g=document.createElement('div'); g.className='group'; const h3=document.createElement('h3'); h3.textContent=doi; const m=document.createElement('span'); m.className='meta'; m.textContent=`${arr.length} dati`; h3.appendChild(m); g.appendChild(h3);
           const grid=document.createElement('div'); grid.className='items-grid';
-          groups[variable].forEach(item=>{
-            const link=String(item.Link||item.URL||''); const a=link?`<a href="${escapeAttr(link)}" target="_blank" rel="noopener">Apri</a>`:'';
-            const val=String(item.Value||''); const unit=String(item.Unit||''); const mean=String(item.Mean||''); const std=String(item.StdDev||''); const n=String(item.N||'');
+          for(const item of arr){
+            const id=item.ID||''; const tags=(item.Tags||'').split(/\s*,\s*/).filter(Boolean);
             const card=document.createElement('div'); card.className='note-card';
             card.innerHTML=`
               <div class="card-body">
-                <div><b>${escapeHtml(val)} ${escapeHtml(unit)}</b> <span class="meta">N=${escapeHtml(n)} · mean=${escapeHtml(mean)} · sd=${escapeHtml(std)}</span></div>
+                <div><span class="type" style="background:${getTypeColor(String(item.Variable||'SENZA VAR'))}">${escapeHtml(String(item.Variable||'SENZA VAR'))}</span></div>
                 <div class="meta">DOI: ${escapeHtml(String(item.DOI||''))}</div>
-                <div class="clamp-3">${escapeHtml(String(item.Notes||''))}</div>
-                <div class="meta" style="margin-top:8px">${a}</div>
+              </div>
+              <div class="actions-row">
+                <button class="btn" data-details="${escapeAttr(id)}">Dettagli</button>
               </div>`;
             grid.appendChild(card);
-          });
-          box.appendChild(grid);
-          container.appendChild(box);
-        });
+          }
+          g.appendChild(grid); container.appendChild(g);
+        }
+        container.querySelectorAll('[data-details]').forEach(b=>b.onclick=()=>openDetail(b.dataset.details));
       }
 
-      function openDetail(item){
-        if(!item) return;
-        document.getElementById('detTitle').textContent = String(item.Title||'(senza titolo)');
-        document.getElementById('detId').textContent    = String(item.ID||'');
-        document.getElementById('detDoi').textContent   = String(item.DOI||'');
-        document.getElementById('detType').textContent  = String(item.Type||'');
-        document.getElementById('detTags').textContent  = String(item.Tags||'');
-        document.getElementById('detNote').textContent  = String(item.Note||'');
-        document.getElementById('detText').textContent  = String(item.Text||'');
-        const link = String(item.Link||item.URL||'');
-        document.getElementById('detLink').innerHTML = link ? `<a href="${escapeAttr(link)}" target="_blank" rel="noopener">${escapeHtml(link)}</a>` : '';
-        const img = String(item.ImageLink||'');
-        const imgEl = document.getElementById('detImg');
-        if(img){ imgEl.src=img; imgEl.style.display='block'; imgEl.alt='Immagine '+String(item.ID||''); } else { imgEl.removeAttribute('src'); imgEl.style.display='none'; }
+      function openDetail(id){
+        const item=state.notes.find(n=>(n.ID||'')===id)||state.data.find(d=>(d.ID||'')===id); if(!item) return;
+        document.getElementById('detTitle').textContent=item.Title||'(senza titolo)';
+        const imgEl=document.getElementById('detImg'); if(item.Img){ imgEl.src=item.Img; imgEl.style.display='block'; } else { imgEl.style.display='none'; }
+        document.getElementById('detDoi').textContent=item.DOI||''; document.getElementById('detType').textContent=item.Type||item.Variable||''; 
+        document.getElementById('detTags').textContent=item.Tags||''; document.getElementById('detNote').textContent=item.Note||'';
+        document.getElementById('detText').textContent=item.Text||''; document.getElementById('detLink').innerHTML=item.Link?`<a href="${escapeAttr(item.Link)}" target="_blank" rel="noopener">${escapeHtml(item.Link)}</a>`:'';
         document.getElementById('detailOverlay').style.display='flex';
       }
       function closeDetail(){ document.getElementById('detailOverlay').style.display='none'; }
 
-      function groupBy(arr,keyFn){ return arr.reduce((acc,x)=>{ const k=keyFn(x); (acc[k] ||= []).push(x); return acc; },{}); }
+      function toggleCollapsed(id){ if(collapsed.has(id)) collapsed.delete(id); else collapsed.add(id); renderNotes(); }
+      function toggleAllCollapsed(){ collapseAll=!collapseAll; renderNotes(); }
 
-      const NOTES_HEADERS=['CreatedAt','URL','Link','Title','DOI','Text','Tags','Type','ClientTimestamp','ID','LinkedIDs','Note','ImageLink'];
-      const DATA_HEADERS=['CreatedAt','DOI','URL','Link','Variable','Value','Unit','N','Mean','StdDev','Notes','ClientTimestamp'];
+      function exportNotesCsv(){ const arr=getFilteredNotes(); const csv=arrayToCsv(arr); downloadCsv(csv,'notes.csv'); }
+      function exportDataCsv(){ const arr=getFilteredData(); const csv=arrayToCsv(arr); downloadCsv(csv,'data.csv'); }
+      function getFilteredNotes(){ const q=document.getElementById('notesSearch').value.toLowerCase(); const t=document.getElementById('notesTypeFilter').value; const tagf=document.getElementById('notesTagFilter').value;
+        return state.notes.filter(n=> (!q||((n.Title||'').toLowerCase().includes(q)||(n.DOI||'').toLowerCase().includes(q)||(n.Text||'').toLowerCase().includes(q))) && (!t||n.Type===t) && (!tagf||(n.Tags||'').split(/\s*,\s*/).includes(tagf)) ); }
+      function getFilteredData(){ const q=document.getElementById('dataSearch').value.toLowerCase(); const varf=document.getElementById('dataVarFilter').value;
+        return state.data.filter(d=> (!q||((d.Variable||'').toLowerCase().includes(q)||(d.DOI||'').toLowerCase().includes(q))) && (!varf||d.Variable===varf) ); }
 
-      function exportNotesCsv(){ const rows=getFilteredNotes(); const csv=toCsv(rows,NOTES_HEADERS); downloadCsv(csv,`notes_${timestamp()}.csv`); }
-      function exportDataCsv(){ const rows=getFilteredData(); const csv=toCsv(rows,DATA_HEADERS); downloadCsv(csv,`data_${timestamp()}.csv`); }
+      function arrayToCsv(arr){ if(!arr.length) return ''; const headers=Object.keys(arr[0]); const lines=[headers.join(',')]; for(const r of arr){ lines.push(headers.map(h=> JSON.stringify(r[h]||'')).join(',')); } return lines.join('\n'); }
+      function downloadCsv(csv,filename){ const blob=new Blob([csv],{type:'text/csv'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=filename; a.click(); }
+      async function generateIds(){ showToast('Funzione non implementata in questa demo','info'); }
 
-      function toCsv(rows,headers){
-        const esc=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"';
-        const lines=[headers.map(h=>'"'+h+'"').join(',')];
-        for(const r of rows){ lines.push(headers.map(h=>esc(r[h])).join(',')); }
-        return lines.join('\r\n');
-      }
-      function downloadCsv(text,filename){
-        const blob=new Blob([text],{type:'text/csv;charset=utf-8;'}); const url=URL.createObjectURL(blob);
-        const a=document.createElement('a'); a.href=url; a.download=filename; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
-      }
-
-      function timestamp(){ const d=new Date(); const pad=n=>String(n).padStart(2,'0'); return `${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`; }
-      function escapeHtml(str){ return String(str).replace(/[&<>"']/g,s=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s])); }
+      function groupBy(arr,fn){ const m=new Map(); for(const x of arr){ const k=fn(x); if(!m.has(k)) m.set(k,[]); m.get(k).push(x); } return m.entries(); }
+      function escapeHtml(str){ return String(str).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c])); }
       function escapeAttr(str){ return escapeHtml(str).replace(/"/g,'&quot;'); }
 
-      function jsonp(baseUrl){
-        return new Promise((resolve,reject)=>{
-          try{
-            const url=new URL(baseUrl); const cb='cb_'+Math.random().toString(36).slice(2);
-            url.searchParams.set('callback',cb);
-            const s=document.createElement('script'); let done=false;
-            window[cb]=(data)=>{ done=true; cleanup(); resolve(data); };
-            s.src=url.toString(); s.onerror=(e)=>{ cleanup(); reject(e); };
-            document.body.appendChild(s);
-            const t=setTimeout(()=>{ if(!done){ cleanup(); reject(new Error('JSONP timeout')); } },12000);
-            function cleanup(){ try{ delete window[cb]; }catch{} try{ s.remove(); }catch{} clearTimeout(t); }
-          }catch(err){ reject(err); }
-        });
-      }
-
-      function showToast(message,kind='info',timeout=3000){
-        try{
-          const c=document.getElementById('toastContainer'); if(!c) return alert(message);
-          const el=document.createElement('div'); el.className='toast '+(kind||'info'); el.textContent=String(message);
-          c.appendChild(el); const t=setTimeout(()=>{ try{ el.remove(); }catch{} }, timeout||3000);
-          el.addEventListener('click',()=>{ clearTimeout(t); try{ el.remove(); }catch{} });
-        }catch(e){ console.warn('toast error',e); }
-      }
-
-      let linkOrigin=null, linkSelection=new Set();
-
-      function openLinkWidget(item){
-        if(!item||!item.ID) return;
-        linkOrigin=item;
-        linkSelection=new Set(String(item.LinkedIDs||'').split(',').map(s=>s.trim()).filter(Boolean));
-        document.getElementById('lwSourceId').textContent=String(item.ID);
-        document.getElementById('lwSearch').value=''; renderLinkList();
-        document.getElementById('linkOverlay').style.display='flex';
-        setTimeout(()=>document.getElementById('lwSearch').focus(),0);
-        document.getElementById('lwSearch').oninput=renderLinkList;
-      }
-      function closeLinkWidget(){
-        document.getElementById('linkOverlay').style.display='none';
-        document.getElementById('lwList').innerHTML=''; document.getElementById('lwSelected').innerHTML=''; document.getElementById('lwCount').textContent='0';
-        linkOrigin=null; linkSelection.clear();
-      }
-      function renderLinkList(){
-        const q=document.getElementById('lwSearch').value.trim().toLowerCase();
-        const list=document.getElementById('lwList'); list.innerHTML='';
-        state.notes.forEach(n=>{
-          const id=String(n.ID||''); if(!id) return; if(linkOrigin && id===String(linkOrigin.ID)) return;
-          const hay=[n.Title,n.Text,n.Tags,n.Note,n.ImageLink].map(x=>String(x||'').toLowerCase()).join(' ');
-          if(q && !hay.includes(q)) return;
-          const checked=linkSelection.has(id)?'checked':'';
-          const tagsHtml=String(n.Tags||'').split(',').map(t=>t.trim()).filter(Boolean).map(t=>`<span class="tag">${escapeHtml(t)}</span>`).join(' ');
-          const img=String(n.ImageLink||''); const imgHtml=img?`<img class="thumb" src="${escapeAttr(img)}" alt="img ${escapeAttr(id)}">`:`<div class="noimg">no img</div>`;
-          const div=document.createElement('div'); div.className='lw-item';
-          div.innerHTML=`
-            <label style="display:grid;grid-template-columns:24px 96px 1fr;gap:10px;align-items:flex-start;">
-              <input class="lw-check" type="checkbox" value="${escapeAttr(id)}" ${checked} style="margin-top:6px;">
-              <div>${imgHtml}</div>
-              <div>
-                <div class="t clamp-2" style="font-weight:700">${escapeHtml(n.Title||'(senza titolo)')}</div>
-                <div class="muted clamp-2">${escapeHtml(n.Text||'')}</div>
-                ${n.Note?`<div class="muted"><b>Nota:</b> ${escapeHtml(n.Note)}</div>`:''}
-                ${tagsHtml?`<div class="tags" style="margin-top:6px;">${tagsHtml}</div>`:''}
-                <div class="muted" style="margin-top:6px;">ID: <code>${escapeHtml(id)}</code></div>
-              </div>
-            </label>`;
-          list.appendChild(div);
-        });
-        list.onchange=(e)=>{
-          const t=e.target; if(t && t.classList.contains('lw-check')){ const id=String(t.value); if(t.checked) linkSelection.add(id); else linkSelection.delete(id); updateSelectedPreview(); }
-        };
-        updateSelectedPreview();
-      }
-      function updateSelectedPreview(){
-        const sel=Array.from(linkSelection);
-        document.getElementById('lwCount').textContent=String(sel.length);
-        document.getElementById('lwSelected').innerHTML=sel.map(id=>`<span class="pill">ID ${escapeHtml(id)}</span>`).join(' ');
-      }
-      async function confirmLink(){
-        if(!linkOrigin||!linkOrigin.ID){ closeLinkWidget(); return; }
-        const checked=Array.from(linkSelection);
-        showToast('Invio dei link al server…','info',2000);
-        try{
-          const url=new URL(DEFAULT_APPS_URL); url.searchParams.set('mode','updateLinks'); url.searchParams.set('id',String(linkOrigin.ID)); url.searchParams.set('linkedIds',checked.join(','));
-          const res=await jsonp(url.toString());
-          if(!res||res.ok!==true){ showToast('Errore: risposta non valida dal server','err',5000); return; }
-          await loadAll(); closeLinkWidget(); showToast('Link salvati sul server','ok',3500);
-        }catch(err){ console.error('confirmLink error',err); showToast('Errore di rete durante il salvataggio','err',5000); }
-      }
-
-      async function generateIds(){
-        try{
-          if(!confirm('Assegnare un ID alle note senza ID?')) return;
-          const url=new URL(DEFAULT_APPS_URL); url.searchParams.set('mode','assignIds');
-          const data=await jsonp(url.toString());
-          const assigned=data&&typeof data.assigned==='number'?data.assigned:null;
-          showToast(typeof assigned==='number'?`Assegnati ${assigned} ID`:'Assegnazione ID completata','ok',3500);
-          await loadAll();
-        }catch(e){ console.error('Errore generateIds',e); showToast('Errore durante la generazione degli ID','err',5000); }
-      }
+      function showToast(msg,type='info',dur=3000){ const c=document.getElementById('toastContainer'); const t=document.createElement('div'); t.className='toast '+type; t.textContent=msg; c.appendChild(t); setTimeout(()=>{t.style.opacity='0'; setTimeout(()=>t.remove(),400);},dur); }
     </script>
   </body>
 </html>
