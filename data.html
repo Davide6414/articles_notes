@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Article Note Saver - Dati</title>
+    <style>
+      :root { --bg:#f6f7fb; --panel:#ffffff; --muted:#64748b; --text:#0f172a; --accent:#2563eb; --accent2:#10b981; --ring:#93c5fd; --border:#e5e7eb; --border-strong:#cbd5e1; }
+      *{ box-sizing:border-box; transition:all .18s ease }
+      html,body{ height:100% }
+      body{ margin:0; font-family: system-ui, Segoe UI, Roboto, Arial, sans-serif; background: radial-gradient(1200px 800px at 20% -10%, #eef2ff 0%, #f8fafc 40%, var(--bg) 100%); color:var(--text); line-height:1.55; letter-spacing:.1px }
+      :focus-visible{ outline:3px solid var(--ring); outline-offset:2px; border-radius:10px }
+      .header{ padding:22px; border-bottom:1px solid #dbeafe; background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,0)) 0 0/100% 100%, linear-gradient(90deg, var(--accent) 0%, var(--accent2) 100%); color:#fff }
+      .header h1{ margin:0; font-size:22px; font-weight:800 }
+      main{ padding:24px 28px }
+      .filters{ display:grid; grid-template-columns: 1fr minmax(180px,240px) auto; gap:12px; margin-bottom:20px }
+      .filters input,.filters select{ padding:10px 12px; border-radius:10px; border:1px solid var(--border); background:#fff; color:var(--text); font-size:14px; box-shadow:0 1px 0 rgba(0,0,0,.02) }
+      .filters button{ padding:10px 14px; border:1px solid var(--border-strong); border-radius:10px; background:#fff; color:var(--text); font-weight:600; cursor:pointer; font-size:14px }
+      .filters #dataExportCsv{ background:var(--accent); border-color:var(--accent); color:#fff }
+      .filters #dataExportCsv:hover{ background:#1d4ed8 }
+      .groups{ display:flex; flex-direction:column; gap:22px; width:100% }
+      .group{ width:100%; background:var(--panel); border:1px solid var(--border); border-radius:16px; overflow:hidden; box-shadow:0 1px 0 rgba(15,23,42,0.02), 0 10px 24px -18px rgba(2,6,23,0.3) }
+      .group h3{ margin:0; padding:14px 16px; border-bottom:1px solid var(--border); font-size:16px; font-weight:700; background: linear-gradient(90deg, var(--accent) 0%, var(--accent2) 100%); color:#fff; display:flex; gap:8px; align-items:center; justify-content:space-between }
+      .group h3 .meta{ font-weight:600; opacity:.95; font-size:12px; padding:2px 8px; background:#ffffff2b; border:1px solid #ffffff55; border-radius:999px }
+      .items-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); grid-auto-rows:1fr; gap:14px; padding:12px; align-items:stretch }
+      .note-card{ background:#fff; border:1px solid #e5e7eb; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,.06); overflow:hidden; display:flex; flex-direction:column; height:100% }
+      .note-card .card-body{ padding:12px; display:flex; flex-direction:column; gap:8px; flex:1 }
+      .meta{ color:#6b7280; font-size:12px }
+      .btn{ padding:8px 14px; border-radius:10px; border:1px solid var(--border-strong); background:#fff; cursor:pointer; font-size:13px; font-weight:600 }
+      .btn:hover{ background:#f3f4f6 }
+      .toast-container{ position:fixed; top:16px; right:16px; display:flex; flex-direction:column; gap:8px; z-index:100000 }
+      .toast{ min-width:260px; max-width:380px; background:#fff; border:1px solid var(--border-strong); border-left:6px solid var(--accent); box-shadow:0 6px 20px rgba(2,6,23,.18); padding:12px 14px; border-radius:12px; font-size:14px; color:var(--text) }
+      .toast.err{ border-left-color:#dc2626 }
+      .toast.ok{ border-left-color:#16a34a }
+      .linkwrap a{ color:#0ea5e9; text-decoration:none; font-weight:700 }
+      .linkwrap a:hover{ text-decoration:underline }
+    </style>
+  </head>
+  <body>
+    <header class="header"><h1>Dati</h1></header>
+    <main>
+      <div class="filters">
+        <input id="dataSearch" placeholder="Cerca per variabile / DOI" aria-label="Cerca nei dati" />
+        <select id="dataVarFilter" aria-label="Filtra per variabile"><option value="">Tutte le variabili</option></select>
+        <button id="dataExportCsv" title="Esporta i dati filtrati in CSV">Esporta CSV</button>
+      </div>
+      <div id="dataGroups" class="groups" aria-live="polite"></div>
+    </main>
+
+    <div id="toastContainer" class="toast-container" aria-live="polite" aria-atomic="true"></div>
+
+    <script>
+      const DEFAULT_APPS_URL="https://script.google.com/macros/s/AKfycbyRXsW2jhj_NarPEyX5T8Yqf8U05qrZtPWReMwC9oW4dHTqXegnZhUmCwuYVmMXZ1uX/exec";
+      const state={ data:[] };
+
+      document.addEventListener('DOMContentLoaded',()=>{
+        document.getElementById('dataSearch').oninput=renderData;
+        document.getElementById('dataVarFilter').onchange=renderData;
+        document.getElementById('dataExportCsv').onclick=exportDataCsv;
+        loadData();
+      });
+
+      async function loadData(){
+        try{
+          const url=new URL(DEFAULT_APPS_URL); url.searchParams.set('mode','all');
+          const res=await fetch(url.toString()); const json=await res.json();
+          state.data=Array.isArray(json.data)?json.data:[];
+        }catch(e){
+          try{
+            const url=new URL(DEFAULT_APPS_URL); url.searchParams.set('mode','all');
+            const data=await jsonp(url.toString());
+            state.data=Array.isArray(data.data)?data.data:[];
+          }catch(e2){ console.error('Errore caricamento dati:',e2); showToast('Errore nel recupero dati dal server','err',5000); }
+        }
+        populateFilters(); renderData();
+      }
+
+      function populateFilters(){
+        const varSet=new Set(); state.data.forEach(d=>{ if(d.Variable) varSet.add(String(d.Variable)); });
+        document.getElementById('dataVarFilter').innerHTML='<option value="">Tutte le variabili</option>'+Array.from(varSet).sort().map(v=>`<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join('');
+      }
+
+      function getFilteredData(){
+        const search=document.getElementById('dataSearch').value.trim().toLowerCase();
+        const varFilter=document.getElementById('dataVarFilter').value;
+        return state.data.filter(d=>{
+          if(varFilter && String(d.Variable)!==varFilter) return false;
+          if(!search) return true;
+          const hay=[d.Variable,d.DOI,d.URL,d.Notes,d.Unit].map(x=>String(x||'').toLowerCase()).join(' ');
+          return hay.includes(search);
+        });
+      }
+
+      function renderData(){
+        const filtered=getFilteredData();
+        const groups=groupBy(filtered,x=>String(x.Variable||'Senza variabile'));
+        const container=document.getElementById('dataGroups'); container.innerHTML='';
+        Object.keys(groups).sort().forEach(variable=>{
+          const box=document.createElement('div'); box.className='group';
+          box.innerHTML=`<h3><span>${escapeHtml(variable)}</span> <span class="meta">${groups[variable].length}</span></h3>`;
+          const grid=document.createElement('div'); grid.className='items-grid';
+          groups[variable].forEach(item=>{
+            const link=String(item.Link||item.URL||''); const a=link?`<a href="${escapeAttr(link)}" target="_blank" rel="noopener">Apri</a>`:'';
+            const val=String(item.Value||''); const unit=String(item.Unit||''); const mean=String(item.Mean||''); const std=String(item.StdDev||''); const n=String(item.N||'');
+            const cval=String(item.ControlValue||''); const cunit=String(item.ControlUnit||''); const cmean=String(item.ControlMean||''); const cstd=String(item.ControlStdDev||''); const cn=String(item.ControlN||'');
+            const cnotes=String(item.ControlNotes||'');
+            const card=document.createElement('div'); card.className='note-card';
+            card.innerHTML=`
+              <div class="card-body">
+                <div><b>${escapeHtml(val)} ${escapeHtml(unit)}</b> <span class="meta">N=${escapeHtml(n)} · mean=${escapeHtml(mean)} · sd=${escapeHtml(std)}</span></div>
+                <div class="meta">Controllo: <b>${escapeHtml(cval)} ${escapeHtml(cunit)}</b> · N=${escapeHtml(cn)} · mean=${escapeHtml(cmean)} · sd=${escapeHtml(cstd)}</div>
+                ${cnotes?`<div class="meta">Note controllo: ${escapeHtml(cnotes)}</div>`:''}
+                <div class="meta">DOI: ${escapeHtml(String(item.DOI||''))}</div>
+                <div class="clamp-3">${escapeHtml(String(item.Notes||''))}</div>
+                <div class="meta" style="margin-top:8px">${a}</div>
+              </div>`;
+            grid.appendChild(card);
+          });
+          box.appendChild(grid);
+          container.appendChild(box);
+        });
+      }
+
+      function exportDataCsv(){
+        const headers=['CreatedAt','DOI','URL','Link','Variable','Value','Unit','N','Mean','StdDev','ControlValue','ControlUnit','ControlN','ControlMean','ControlStdDev','ControlNotes','Notes','ClientTimestamp'];
+        const rows=getFilteredData();
+        const csv=toCsv(rows,headers); downloadCsv(csv,`data_${timestamp()}.csv`);
+      }
+
+      function groupBy(arr,keyFn){ return arr.reduce((acc,x)=>{ const k=keyFn(x); (acc[k] ||= []).push(x); return acc; },{}); }
+      function toCsv(rows,headers){
+        const esc=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"';
+        const lines=[headers.map(h=>'"'+h+'"').join(',')];
+        for(const r of rows){ lines.push(headers.map(h=>esc(r[h])).join(',')); }
+        return lines.join('\r\n');
+      }
+      function downloadCsv(text,filename){
+        const blob=new Blob([text],{type:'text/csv;charset=utf-8;'}); const url=URL.createObjectURL(blob);
+        const a=document.createElement('a'); a.href=url; a.download=filename; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+      }
+      function timestamp(){ const d=new Date(); const pad=n=>String(n).padStart(2,'0'); return `${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`; }
+      function escapeHtml(str){ return String(str).replace(/[&<>"']/g,s=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s])); }
+      function escapeAttr(str){ return escapeHtml(str).replace(/"/g,'&quot;'); }
+      function jsonp(baseUrl){
+        return new Promise((resolve,reject)=>{
+          try{
+            const url=new URL(baseUrl); const cb='cb_'+Math.random().toString(36).slice(2);
+            url.searchParams.set('callback',cb);
+            const s=document.createElement('script'); let done=false;
+            window[cb]=(data)=>{ done=true; cleanup(); resolve(data); };
+            s.src=url.toString(); s.onerror=(e)=>{ cleanup(); reject(e); };
+            document.body.appendChild(s);
+            const t=setTimeout(()=>{ if(!done){ cleanup(); reject(new Error('JSONP timeout')); } },12000);
+            function cleanup(){ try{ delete window[cb]; }catch{} try{ s.remove(); }catch{} clearTimeout(t); }
+          }catch(err){ reject(err); }
+        });
+      }
+      function showToast(message,kind='info',timeout=3000){
+        try{
+          const c=document.getElementById('toastContainer'); if(!c) return alert(message);
+          const el=document.createElement('div'); el.className='toast '+(kind||'info'); el.textContent=String(message);
+          c.appendChild(el); const t=setTimeout(()=>{ try{ el.remove(); }catch{} }, timeout||3000);
+          el.addEventListener('click',()=>{ clearTimeout(t); try{ el.remove(); }catch{} });
+        }catch(e){ console.warn('toast error',e); }
+      }
+    </script>
+  </body>
+</html>
