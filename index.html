@@ -97,32 +97,15 @@
       });
 
       async function loadAll() {
-  try {
-    const url = new URL(DEFAULT_APPS_URL);
-    url.searchParams.set('mode', 'all');
-    const res = await fetch(url.toString());
-    const json = await res.json();
-    state.notes = Array.isArray(json.notes) ? json.notes : [];
-    state.data = Array.isArray(json.data) ? json.data : [];
-    populateFilters();
-    renderNotes();
-    renderData();
-  } catch (e) {
-    try {
-      const url = new URL(DEFAULT_APPS_URL);
-      url.searchParams.set('mode', 'all');
-      const data = await jsonp(url.toString());
-      state.notes = Array.isArray(data.notes) ? data.notes : [];
-      state.data = Array.isArray(data.data) ? data.data : [];
-      populateFilters();
-      renderNotes();
-      renderData();
-    } catch (e2) {
-      console.error('Errore caricamento dati:', e2);
-      alert('Errore nel recupero dati dal server.');
-    }
-  }
-}
+        try {
+          const url = new URL(DEFAULT_APPS_URL);
+          url.searchParams.set('mode', 'all');
+          try { const res = await fetch(DEFAULT_APPS_URL, { method:'POST', headers:{'Content-Type':'application/json; charset=UTF-8'}, body: JSON.stringify({ mode:'updateLinks', id, linkedIds: arr.join(', ') }) }); await res.text(); } catch (_) { const url = new URL(DEFAULT_APPS_URL); url.searchParams.set('mode','updateLinks'); url.searchParams.set('id', id); url.searchParams.set('linkedIds', arr.join(', ')); await jsonp(url.toString()); } await loadAll();
+        } catch (e) {
+          console.error('Errore assignIds', e);
+          alert('Errore durante assegnazione ID');
+        }
+      }
 
       function switchTab(which) {
         const nBtn = document.getElementById('tabNotes');
@@ -372,3 +355,5 @@
     </script>
   </body>
 </html>
+
+
