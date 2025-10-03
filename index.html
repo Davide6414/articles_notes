@@ -1,641 +1,293 @@
 <!doctype html>
 <html lang="it">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Article Note Saver - Dashboard</title>
-    <style>
-      :root {
-        --bg: #f6f7fb;
-        --panel: #ffffff;
-        --muted: #64748b;
-        --text: #0f172a;
-        --accent: #2563eb;
-        --accent2: #10b981;
-        --ring: #93c5fd;
-        --border: #e5e7eb;
-        --border-strong: #cbd5e1;
-      }
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Linked Notes – Mindmap</title>
+  <style>
+    :root{
+      --bg:#0b1220; --grid:#111827; --panel:#0f172a; --text:#e5eef8; --muted:#93a3b5;
+      --accent:#2e8b57; --accent2:#1e90ff; --edge:#6aa2ff55; --node:#0f172a; --nodeBorder:#334155;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;background:radial-gradient(1200px 1200px at 30% 10%, #0f1a2f 0%, #0b1220 45%, #070d18 100%); color:var(--text); font-family:system-ui,Segoe UI,Roboto,Arial}
+    header{position:fixed;left:0;right:0;top:0;z-index:10;display:flex;gap:8px;align-items:center;padding:10px 12px;background:linear-gradient(90deg,var(--accent),var(--accent2));box-shadow:0 2px 10px #0007}
+    header b{font-weight:700}
+    header .sp{flex:1}
+    header input{padding:8px 10px;border:1px solid #ffffff66;border-radius:8px;background:#ffffff22;color:#fff;min-width:260px}
+    header .btn{padding:8px 12px;border-radius:8px;border:1px solid #fff8;background:#fff0;color:#fff;cursor:pointer}
+    header .btn.primary{background:#fff;color:#1b2b3c;font-weight:700}
+    #main{position:absolute; inset:56px 0 0 0; overflow:hidden}
 
-      * { box-sizing: border-box; transition: all .18s ease; }
-      html, body { height: 100%; }
-      body {
-        margin: 0;
-        font-family: system-ui, Segoe UI, Roboto, Arial, sans-serif;
-        background: radial-gradient(1200px 800px at 20% -10%, #eef2ff 0%, #f8fafc 40%, var(--bg) 100%);
-        color: var(--text);
-        line-height: 1.55;
-        letter-spacing: .1px;
-      }
-      :focus-visible { outline: 3px solid var(--ring); outline-offset: 2px; border-radius: 10px; }
+    /* viewport (pan/zoom) */
+    #viewport{width:100%;height:100%;position:relative;cursor:grab}
+    #viewport.grabbing{cursor:grabbing}
 
-      /* Header */
-      .header {
-        padding: 22px;
-        border-bottom: 1px solid #dbeafe;
-        background:
-          linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,0)) 0 0/100% 100%,
-          linear-gradient(90deg, var(--accent) 0%, var(--accent2) 100%);
-        color: #fff;
-      }
-      .header h1 { margin: 0; font-size: 24px; font-weight: 800; letter-spacing: .2px; }
-      .tabs { display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
-      .tabs button {
-        padding: 10px 16px; border-radius: 999px; background: #ffffff2b;
-        color: #fff; border: 1px solid #ffffff55; cursor: pointer; font-size: 14px; backdrop-filter: blur(2px);
-      }
-      .tabs button:hover { background: #ffffff45; }
-      .tabs button.active { background: #fff; color: var(--accent); font-weight: 700; }
+    /* STAGE con dimensione reale per l’SVG */
+    #stage{
+      position:absolute; left:50%; top:50%;
+      width:3000px; height:3000px;
+      transform:translate(-50%,-50%) scale(1);
+      transform-origin:50% 50%;
+      background:
+        radial-gradient(transparent 0 2px, #0b1220 3px) 0 0/40px 40px;
+    }
 
-      /* Full-width content: ogni articolo occupa una banda orizzontale */
-      main { padding: 24px 28px; max-width: none; margin: 0; }
+    /* edges */
+    #edges{position:absolute; left:0; top:0; width:100%; height:100%; pointer-events:none; display:block}
 
-      /* Filters */
-      .filters {
-        display: grid;
-        grid-template-columns: 1fr repeat(2, minmax(180px, 240px)) auto auto auto;
-        gap: 12px;
-        margin-bottom: 20px;
-      }
-      @media (max-width: 980px) { .filters { grid-template-columns: 1fr 1fr; } }
-      .filters input, .filters select {
-        padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border);
-        background: #ffffff; color: var(--text); font-size: 14px; box-shadow: 0 1px 0 rgba(0,0,0,.02);
-      }
-      .filters input::placeholder { color: #94a3b8; }
-      .filters button {
-        padding: 10px 14px; border: 1px solid var(--border-strong); border-radius: 10px;
-        background: #fff; color: var(--text); font-weight: 600; cursor: pointer; font-size: 14px;
-      }
-      .filters button:hover { background: #f3f4f6; }
-      .filters #notesExportCsv, .filters #dataExportCsv { background: var(--accent); border-color: var(--accent); color: #fff; }
-      .filters #notesExportCsv:hover, .filters #dataExportCsv:hover { background: #1d4ed8; }
+    /* nodes layer */
+    #nodes{position:absolute; left:0; top:0; width:100%; height:100%}
 
-      /* BANDS: ogni .group è una banda piena larghezza; dentro, griglia uniforme di note */
-      .groups {
-        display: flex;
-        flex-direction: column;     /* articoli impilati verticalmente in bande */
-        gap: 22px;
-        width: 100%;
-      }
-      .group {
-        width: 100%;
-        background: var(--panel);
-        border: 1px solid var(--border);
-        border-radius: 16px;
-        overflow: hidden;
-        box-shadow: 0 1px 0 rgba(15,23,42,0.02), 0 10px 24px -18px rgba(2,6,23,0.3);
-      }
-      .group:hover { transform: translateY(-2px); box-shadow: 0 14px 30px -14px rgba(2,6,23,.35); }
-      .group h3 {
-        margin: 0; padding: 14px 16px; border-bottom: 1px solid var(--border);
-        font-size: 16px; font-weight: 700;
-        background: linear-gradient(90deg, var(--accent) 0%, var(--accent2) 100%);
-        color: #fff; display: flex; gap: 8px; align-items: center; justify-content: space-between;
-      }
-      .group h3 .meta {
-        font-weight: 600; opacity: .95; font-size: 12px; padding: 2px 8px;
-        background: #ffffff2b; border: 1px solid #ffffff55; border-radius: 999px;
-      }
+    .node{
+      position:absolute; transform:translate(-50%,-50%);
+      background:linear-gradient(180deg,#0f172a,#0b1424);
+      border:1px solid var(--nodeBorder); border-radius:14px;
+      padding:10px; width:220px; box-shadow:0 8px 24px #0008
+    }
+    .node.center{border:1px solid #fff; box-shadow:0 12px 28px #000c}
+    .node .title{font-weight:700; font-size:14px; line-height:1.2}
+    .node .meta{color:var(--muted); font-size:12px; margin-top:6px}
+    .node .tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+    .node .tag{font-size:11px;background:#1e293b;color:#dbe5f2;border:1px solid #324256;padding:2px 6px;border-radius:10px}
+    .node .note{margin-top:8px; font-size:12px; color:#d8e7ff}
+    .thumb{width:100%; height:110px; object-fit:cover; border-radius:10px; border:1px solid #22314a; margin-top:8px; background:#0b1528}
+    .node .actions{display:flex;gap:8px;margin-top:10px}
+    .node .btn{padding:6px 8px; font-size:12px; border-radius:8px; border:1px solid #2b3b56; background:#0e1a2d; color:#e6f0ff; cursor:pointer}
+    .node .btn:hover{border-color:#5b7bb6}
+    line.edge{stroke:var(--edge); stroke-width:2}
 
-      /* Griglia uniforme di note all’interno della banda */
-      .items-grid{
-        display:grid;
-        grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); /* riempi orizzontalmente tutta la banda */
-        grid-auto-rows: 1fr;          /* altezze uniformi per riga */
-        gap:14px;
-        padding:12px;
-        align-items: stretch;         /* tutte le card stessa altezza in riga */
-      }
+    .legend{position:fixed;left:12px;bottom:12px;background:#0c1528dd;border:1px solid #24334d;border-radius:10px;padding:8px 10px;font-size:12px;color:#cfe1ff}
 
-      .note-card{
-        background:#fff;
-        border:1px solid #e5e7eb;
-        border-radius:12px;
-        box-shadow:0 2px 8px rgba(0,0,0,.06);
-        overflow:hidden;
-        display:flex;
-        flex-direction:column;
-        height:100%;                  /* riempi la cella */
-      }
-      .note-card:hover{ transform:translateY(-2px); box-shadow:0 8px 22px rgba(0,0,0,.09); }
-      .note-card .thumb,
-      .note-card .noimg{ width:100%; height:140px; border-radius:0; margin:0; }
-      .note-card .noimg{ border-style:dashed; display:flex;align-items:center;justify-content:center;color:#94a3b8;background:#f8fafc }
-      .note-card .card-body{ padding:12px; display:flex; flex-direction:column; gap:6px; flex:1; }
-      .note-card .title-row{ font-size:14px; font-weight:700; line-height:1.25 }
-      .note-card .type{ font-size:11px; font-weight:800; color:#2563eb; text-transform:uppercase; letter-spacing:.3px }
-      .note-card .meta{ color:#6b7280; font-size:12px }
-      .note-card .fulltext{ font-size:13px; color:#0f172a }
-      .note-card .tags{ display:flex; gap:6px; flex-wrap:wrap }
-      .note-card .tag{ font-size:11px; color:#0b1220; background:#ecfeff; padding:3px 8px; border-radius:999px; border:1px solid #bae6fd }
-      .note-card .actions-row{ margin:0 12px 12px; display:flex; gap:8px; flex-wrap:wrap }
-      .note-card .btn{ padding:6px 10px; font-size:12px; border-radius:8px; border:1px solid #d1d5db; background:#fff; cursor:pointer }
-      .note-card .btn:hover{ background:#f3f4f6 }
-      .note-card .btn.primary{ background:#2563eb; color:#fff; border-color:#2563eb }
-      .note-card.collapsed .fulltext,
-      .note-card.collapsed .linkwrap,
-      .note-card.collapsed .ids{ display:none }
+    /* toast */
+    .toastc{position:fixed; top:64px; right:16px; display:flex; flex-direction:column; gap:8px; z-index:99}
+    .toast{min-width:220px; max-width:360px; background:#0e172a; border:1px solid #2a3b55; border-left:4px solid #1e90ff; box-shadow:0 8px 18px #0008; padding:8px 10px; border-radius:10px; font-size:13px}
+    .toast.ok{border-left-color:#16a34a}
+    .toast.err{border-left-color:#dc2626}
+  </style>
+</head>
+<body>
+  <header>
+    <b>Mindmap Linked Notes</b>
+    <div class="sp"></div>
+    <input id="search" placeholder="Cerca per titolo/testo/tag/ID…" />
+    <button class="btn" id="pickBtn" title="Scegli nota come centro">Scegli</button>
+    <button class="btn primary" id="recenterBtn" title="Torna alla nota centrale">Re-centra</button>
+    <a class="btn" id="backBtn" href="./" title="Torna alla dashboard">Dashboard</a>
+  </header>
 
-      .clamp-2 { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
-      .clamp-3 { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; }
-
-      .linkwrap a { color: #0ea5e9; text-decoration: none; font-weight: 700; }
-      .linkwrap a:hover { text-decoration: underline; }
-
-      .ids { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
-
-      .btn {
-        padding: 8px 14px; border-radius: 10px; border: 1px solid var(--border-strong);
-        background: #fff; cursor: pointer; font-size: 13px; font-weight: 600;
-      }
-      .btn:hover { background: #f3f4f6; }
-      .btn[disabled] { opacity: .5; cursor: not-allowed; }
-      .btn.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
-      .btn.primary:hover { background: #1d4ed8; }
-
-      /* Overlay */
-      .overlay {
-        position: fixed; inset: 0; background: rgba(2,6,23,.52);
-        display: none; align-items: center; justify-content: center; z-index: 99999;
-      }
-      .sheet {
-        width: min(880px, 96vw); max-height: min(86vh, 900px);
-        overflow: auto; background: #fff; border-radius: 16px;
-        box-shadow: 0 14px 40px rgba(2, 6, 23, .36); padding: 18px;
-      }
-      .sheet .hd { display: flex; gap: 12px; align-items: center; margin-bottom: 10px; }
-      .sheet .hd b { flex: 1; font-size: 18px; }
-      .sheet .grid { display: grid; grid-template-columns: 160px 1fr; gap: 10px; }
-      .kv .k { font-weight: 800; color: #0b1220; }
-      .kv .v { color: #1f2937; }
-      .imgwide {
-        width: 100%; max-height: 320px; object-fit: cover; border-radius: 12px; border: 1px solid var(--border);
-        background: #f7fafc; margin-bottom: 10px;
-      }
-
-      /* Link widget */
-      .link-widget {
-        width: min(1100px, 96vw); height: min(78vh, 820px);
-        background: #fff; border-radius: 16px; overflow: hidden;
-        box-shadow: 0 14px 40px rgba(2,6,23,.36); display: grid; grid-template-columns: 1.2fr .8fr;
-      }
-      .lw-header { grid-column: 1 / span 2; padding: 12px 14px; background: linear-gradient(90deg, var(--accent), var(--accent2)); color: #fff; display: flex; align-items: center; gap: 8px; }
-      .lw-header b { flex: 1; }
-      .lw-left { border-right: 1px solid var(--border); padding: 10px; overflow: auto; }
-      .lw-right { padding: 10px; overflow: auto; display: flex; flex-direction: column; }
-      .lw-search { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; background: #fff; }
-      .lw-list { margin-top: 10px; }
-      .lw-item { border-bottom: 1px solid #eef3f6; padding: 10px; }
-      .lw-item:hover { background: #f8fafc; }
-      .muted { color: #6b7280; font-size: 12px; }
-      .selected-list { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
-      .pill { display: inline-block; font-size: 12px; padding: 4px 8px; border-radius: 999px; background: #eef6ff; border: 1px solid var(--border-strong); }
-
-      /* Toast */
-      .toast-container { position: fixed; top: 16px; right: 16px; display: flex; flex-direction: column; gap: 8px; z-index: 100000; }
-      .toast {
-        min-width: 260px; max-width: 380px; background: #fff; border: 1px solid var(--border-strong);
-        border-left: 6px solid var(--accent); box-shadow: 0 6px 20px rgba(2,6,23,.18);
-        padding: 12px 14px; border-radius: 12px; font-size: 14px; color: var(--text);
-      }
-      .toast.ok  { border-left-color: #16a34a; }
-      .toast.err { border-left-color: #dc2626; }
-      .toast.info{ border-left-color: var(--accent); }
-    </style>
-  </head>
-  <body>
-    <header class="header">
-      <h1>Article Note Saver - Dashboard</h1>
-      <div class="tabs" role="tablist" aria-label="Sezioni">
-        <button id="tabNotes" class="active" role="tab" aria-selected="true" aria-controls="notesPanel">Appunti</button>
-        <button id="tabData" role="tab" aria-selected="false" aria-controls="dataPanel">Dati</button>
-      </div>
-    </header>
-
-    <main>
-      <section id="notesPanel" role="tabpanel" aria-labelledby="tabNotes">
-        <div class="filters">
-          <input id="notesSearch" placeholder="Cerca testo / titolo / DOI" aria-label="Cerca nelle note" />
-          <select id="notesTypeFilter" aria-label="Filtra per Type"><option value="">Tutti i type</option></select>
-          <select id="notesTagFilter" aria-label="Filtra per Tag"><option value="">Tutti i tag</option></select>
-          <button id="notesExportCsv" title="Esporta gli appunti filtrati in CSV">Esporta CSV</button>
-          <button id="generateIdsBtn" title="Assegna ID alle note senza ID">Genera ID</button>
-          <button id="toggleAllCollapseBtn" title="Compatta/Espandi tutte">Toggle tutti</button>
-        </div>
-        <div id="notesGroups" class="groups" aria-live="polite"></div>
-      </section>
-
-      <section id="dataPanel" style="display:none;" role="tabpanel" aria-labelledby="tabData">
-        <div class="filters">
-          <input id="dataSearch" placeholder="Cerca per variabile / DOI" aria-label="Cerca nei dati" />
-          <select id="dataVarFilter" aria-label="Filtra per variabile"><option value="">Tutte le variabili</option></select>
-          <button id="dataExportCsv" title="Esporta i dati filtrati in CSV">Esporta CSV</button>
-        </div>
-        <div id="dataGroups" class="groups" aria-live="polite"></div>
-      </section>
-    </main>
-
-    <!-- Overlay: Widget di linking -->
-    <div id="linkOverlay" class="overlay" role="dialog" aria-modal="true" aria-label="Seleziona note da linkare">
-      <div class="link-widget">
-        <div class="lw-header">
-          <b>Seleziona note da linkare</b>
-          <button class="btn" id="lwCloseBtn" type="button">Chiudi</button>
-        </div>
-        <div class="lw-left">
-          <input id="lwSearch" class="lw-search" placeholder="Cerca per titolo, testo, tag o note…" />
-          <div id="lwList" class="lw-list"></div>
-        </div>
-        <div class="lw-right">
-          <div>
-            <div class="muted">Sorgente: <code id="lwSourceId"></code></div>
-            <div class="muted" style="margin-top:6px;">Selezionati: <b id="lwCount">0</b></div>
-            <div id="lwSelected" class="selected-list"></div>
-          </div>
-          <div class="actions-row">
-            <button class="btn" id="lwCancelBtn" type="button">Annulla</button>
-            <button class="btn primary" id="lwConfirmBtn" type="button">Linka</button>
-          </div>
-        </div>
+  <div id="main">
+    <div id="viewport">
+      <div id="stage">
+        <svg id="edges" viewBox="0 0 3000 3000" preserveAspectRatio="xMidYMid meet"></svg>
+        <div id="nodes"></div>
       </div>
     </div>
+  </div>
 
-    <!-- Overlay: Dettaglio singola nota -->
-    <div id="detailOverlay" class="overlay" role="dialog" aria-modal="true" aria-label="Dettagli nota">
-      <div class="sheet">
-        <div class="hd">
-          <b id="detTitle">(titolo)</b>
-          <button class="btn" id="detCloseBtn" type="button">Chiudi</button>
-        </div>
-        <div id="detBody">
-          <img id="detImg" class="imgwide" alt="" style="display:none">
-          <div class="grid" style="margin-top:10px">
-            <div class="kv k">ID</div><div class="kv v" id="detId"></div>
-            <div class="kv k">DOI</div><div class="kv v" id="detDoi"></div>
-            <div class="kv k">Type</div><div class="kv v" id="detType"></div>
-            <div class="kv k">Tags</div><div class="kv v" id="detTags"></div>
-            <div class="kv k">Nota</div><div class="kv v" id="detNote"></div>
-            <div class="kv k">Link</div><div class="kv v" id="detLink"></div>
-          </div>
-          <div style="margin-top:12px">
-            <div class="kv k">Testo</div>
-            <div class="kv v" id="detText" style="margin-top:6px"></div>
-          </div>
-        </div>
-      </div>
-    </div>
+  <div class="legend">Mouse: trascina per muovere | Rotellina: zoom | Clic su nodo: re-centra</div>
+  <div class="toastc" id="toastc"></div>
 
-    <!-- Toast container -->
-    <div id="toastContainer" class="toast-container" aria-live="polite" aria-atomic="true"></div>
+  <script>
+    const DEFAULT_APPS_URL = "https://script.google.com/macros/s/AKfycbyRXsW2jhj_NarPEyX5T8Yqf8U05qrZtPWReMwC9oW4dHTqXegnZhUmCwuYVmMXZ1uX/exec";
+    const state = { notes: [], indexById:new Map(), centerId:null, layout:{scale:1, tx:0, ty:0} };
 
-    <script>
-      const DEFAULT_APPS_URL="https://script.google.com/macros/s/AKfycbyRXsW2jhj_NarPEyX5T8Yqf8U05qrZtPWReMwC9oW4dHTqXegnZhUmCwuYVmMXZ1uX/exec";
-      const state={ notes:[], data:[] };
-      const collapsed = new Set();
-      let collapseAll=false;
+    document.addEventListener('DOMContentLoaded', async () => {
+      bindUI();
+      await loadAll();
+      const qp = new URLSearchParams(location.search);
+      const startId = qp.get('id');
+      const start = state.indexById.has(startId) ? startId : (state.notes.find(n=>n.ID)||{}).ID;
+      if (!start) { toast('Nessuna nota disponibile','err'); return; }
+      setCenter(start);
+      layoutAndRender();
+    });
 
-      document.addEventListener('DOMContentLoaded',()=>{
-        document.getElementById('tabNotes').onclick=()=>switchTab('notes');
-        document.getElementById('tabData').onclick=()=>switchTab('data');
+    function bindUI(){
+      document.getElementById('pickBtn').onclick = pickFromSearch;
+      document.getElementById('recenterBtn').onclick = ()=>{ if(state.centerId){ setCenter(state.centerId); layoutAndRender(); }};
+      document.getElementById('search').addEventListener('keydown', e=>{ if(e.key==='Enter') pickFromSearch(); });
+      const vp = document.getElementById('viewport');
+      let dragging=false, sx=0, sy=0, stx=0, sty=0;
+      vp.addEventListener('mousedown', e=>{ if(e.button!==0) return; dragging=true; sx=e.clientX; sy=e.clientY; stx=state.layout.tx; sty=state.layout.ty; vp.classList.add('grabbing'); });
+      window.addEventListener('mouseup', ()=>{ dragging=false; vp.classList.remove('grabbing'); });
+      window.addEventListener('mousemove', e=>{ if(!dragging) return; state.layout.tx = stx + (e.clientX - sx); state.layout.ty = sty + (e.clientY - sy); applyTransform(); });
+      vp.addEventListener('wheel', e=>{
+        e.preventDefault();
+        const scaleFactor = Math.exp(-e.deltaY * 0.001);
+        const prev = state.layout.scale;
+        const next = Math.min(3, Math.max(0.3, prev*scaleFactor));
+        const rect = vp.getBoundingClientRect();
+        const cx = e.clientX - rect.left - rect.width/2 - state.layout.tx;
+        const cy = e.clientY - rect.top - rect.height/2 - state.layout.ty;
+        state.layout.tx -= cx*(next/prev -1);
+        state.layout.ty -= cy*(next/prev -1);
+        state.layout.scale = next;
+        applyTransform();
+      }, {passive:false});
+    }
 
-        document.getElementById('notesSearch').oninput=renderNotes;
-        document.getElementById('notesTypeFilter').onchange=renderNotes;
-        document.getElementById('notesTagFilter').onchange=renderNotes;
-        document.getElementById('dataSearch').oninput=renderData;
-        document.getElementById('dataVarFilter').onchange=renderData;
+    function applyTransform(){
+      const st = document.getElementById('stage');
+      st.style.transform = `translate(calc(-50% + ${state.layout.tx}px), calc(-50% + ${state.layout.ty}px)) scale(${state.layout.scale})`;
+    }
 
-        document.getElementById('notesExportCsv').onclick=exportNotesCsv;
-        document.getElementById('dataExportCsv').onclick=exportDataCsv;
-        const genBtn=document.getElementById('generateIdsBtn'); if(genBtn) genBtn.onclick=generateIds;
-        document.getElementById('toggleAllCollapseBtn').onclick=toggleAllCollapsed;
+    async function loadAll(){
+      try{
+        const url = new URL(DEFAULT_APPS_URL);
+        url.searchParams.set('mode','all');
+        const res = await fetch(url.toString());
+        const json = await res.json();
+        state.notes = Array.isArray(json.notes) ? json.notes : [];
+      }catch(_){
+        const url = new URL(DEFAULT_APPS_URL);
+        url.searchParams.set('mode','all');
+        const data = await jsonp(url.toString());
+        state.notes = Array.isArray(data.notes) ? data.notes : [];
+      }
+      state.notes.forEach(n=>{
+        n.ID = String(n.ID||'').trim();
+        n.LinkedIDs = String(n.LinkedIDs||'').trim();
+        n.Title = String(n.Title||'');
+        n.Text = String(n.Text||'');
+        n.Tags = String(n.Tags||'');
+        n.Note = String(n.Note||'');
+        n.ImageLink = String(n.ImageLink||'');
+        if(n.ID) state.indexById.set(n.ID, n);
+      });
+    }
 
-        document.getElementById('lwCloseBtn').onclick=closeLinkWidget;
-        document.getElementById('lwCancelBtn').onclick=closeLinkWidget;
-        document.getElementById('lwConfirmBtn').onclick=confirmLink;
-        document.getElementById('detCloseBtn').onclick=closeDetail;
-        document.addEventListener('keydown',(e)=>{ if(e.key==='Escape'){ closeLinkWidget(); closeDetail(); } });
+    function neighborsOf(id){
+      if(!id) return [];
+      const out = new Set();
+      const src = state.indexById.get(id);
+      if (src && src.LinkedIDs){
+        normalizeIdList(src.LinkedIDs).forEach(x=> out.add(x));
+      }
+      state.notes.forEach(n=>{
+        if (!n.ID || n.ID===id) return;
+        if (normalizeIdList(n.LinkedIDs).includes(id)) out.add(n.ID);
+      });
+      return Array.from(out).filter(x=>state.indexById.has(x));
+    }
 
-        loadAll();
+    function setCenter(id){ state.centerId = id; }
+
+    function layoutAndRender(){
+      const center = state.indexById.get(state.centerId);
+      if(!center){ toast('ID non valido','err'); return; }
+      const nbrs = neighborsOf(state.centerId);
+
+      const nodesContainer = document.getElementById('nodes');
+      const edgesSvg = document.getElementById('edges');
+      nodesContainer.innerHTML = '';
+      edgesSvg.innerHTML = '';
+
+      // posizioni
+      const positions = new Map();
+      positions.set(center.ID, {x:1500, y:1500}); // centro canvas 3000×3000
+
+      const R = Math.max(180, Math.min(window.innerWidth, window.innerHeight)*0.36);
+      const k = Math.max(1, nbrs.length);
+      nbrs.forEach((nid, i)=>{
+        const a = (i/k)*Math.PI*2;
+        positions.set(nid, { x: 1500 + R*Math.cos(a), y: 1500 + R*Math.sin(a) });
       });
 
-      async function loadAll(){
-        try{
-          const url=new URL(DEFAULT_APPS_URL); url.searchParams.set('mode','all');
-          const res=await fetch(url.toString()); const json=await res.json();
-          state.notes=Array.isArray(json.notes)?json.notes:[]; state.data=Array.isArray(json.data)?json.data:[];
-        }catch(e){
-          try{
-            const url=new URL(DEFAULT_APPS_URL); url.searchParams.set('mode','all');
-            const data=await jsonp(url.toString());
-            state.notes=Array.isArray(data.notes)?data.notes:[]; state.data=Array.isArray(data.data)?data.data:[];
-          }catch(e2){ console.error('Errore caricamento dati:',e2); showToast('Errore nel recupero dati dal server','err',5000); }
+      // edges
+      nbrs.forEach(nid=>{
+        const a = positions.get(center.ID), b = positions.get(nid);
+        const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+        line.setAttribute('class','edge');
+        line.setAttribute('x1', a.x); line.setAttribute('y1', a.y);
+        line.setAttribute('x2', b.x); line.setAttribute('y2', b.y);
+        edgesSvg.appendChild(line);
+      });
+
+      // nodes
+      renderNode(center, positions.get(center.ID), true, nodesContainer);
+      nbrs.forEach(nid=> renderNode(state.indexById.get(nid), positions.get(nid), false, nodesContainer) );
+    }
+
+    function renderNode(n, pos, isCenter, container){
+      const el = document.createElement('div');
+      el.className = 'node' + (isCenter ? ' center' : '');
+      el.style.left = pos.x + 'px';
+      el.style.top  = pos.y + 'px';
+
+      const tags = String(n.Tags||'').split(',').map(t=>t.trim()).filter(Boolean);
+      const tagsHtml = tags.length ? `<div class="tags">${tags.map(t=>`<span class="tag">${escapeHtml(t)}</span>`).join('')}</div>` : '';
+      const noteHtml = n.Note ? `<div class="note"><b>Nota:</b> ${escapeHtml(n.Note)}</div>` : '';
+      const imgHtml  = n.ImageLink ? `<img class="thumb" src="${escapeAttr(n.ImageLink)}" alt="img ${escapeAttr(n.ID)}">` : '';
+
+      el.innerHTML = `
+        <div class="title">${escapeHtml(n.Title || '(senza titolo)')}</div>
+        <div class="meta">ID: <code>${escapeHtml(n.ID)}</code>${n.DOI?` &middot; DOI: <code>${escapeHtml(n.DOI)}</code>`:''}</div>
+        <div class="meta">${escapeHtml(n.Text||'')}</div>
+        ${tagsHtml}
+        ${noteHtml}
+        ${imgHtml}
+        <div class="actions">
+          ${n.Link||n.URL ? `<a class="btn" target="_blank" href="${escapeAttr(n.Link||n.URL)}">Apri</a>`:''}
+          ${!isCenter ? `<button class="btn" data-recenter="${escapeAttr(n.ID)}">Centrale</button>`:''}
+          <button class="btn" data-copyid="${escapeAttr(n.ID)}">Copia ID</button>
+        </div>
+      `;
+
+      el.addEventListener('click', (e)=>{
+        const rec = e.target.closest('[data-recenter]');
+        if (rec){
+          const nid = rec.getAttribute('data-recenter');
+          setCenter(nid); layoutAndRender(); return;
         }
-        populateFilters(); renderNotes(); renderData();
-      }
-
-      function switchTab(which){
-        const nBtn=document.getElementById('tabNotes'), dBtn=document.getElementById('tabData');
-        const nPanel=document.getElementById('notesPanel'), dPanel=document.getElementById('dataPanel');
-        if(which==='data'){
-          nBtn.classList.remove('active'); nBtn.setAttribute('aria-selected','false');
-          dBtn.classList.add('active'); dBtn.setAttribute('aria-selected','true');
-          nPanel.style.display='none'; dPanel.style.display='';
-        } else {
-          dBtn.classList.remove('active'); dBtn.setAttribute('aria-selected','false');
-          nBtn.classList.add('active'); nBtn.setAttribute('aria-selected','true');
-          dPanel.style.display='none'; nPanel.style.display='';
+        const cp = e.target.closest('[data-copyid]');
+        if (cp){
+          const nid = cp.getAttribute('data-copyid');
+          navigator.clipboard?.writeText(nid);
+          toast('ID copiato','ok');
         }
-      }
+      });
 
-      function populateFilters(){
-        const typeSet=new Set(); state.notes.forEach(n=>{ if(n.Type) typeSet.add(String(n.Type)); });
-        document.getElementById('notesTypeFilter').innerHTML='<option value="">Tutti i type</option>'+Array.from(typeSet).sort().map(t=>`<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join('');
+      container.appendChild(el);
+    }
 
-        const tagSet=new Set();
-        state.notes.forEach(n=>{ String(n.Tags||'').split(',').forEach(t=>{ const v=t.trim(); if(v) tagSet.add(v); }); });
-        document.getElementById('notesTagFilter').innerHTML='<option value="">Tutti i tag</option>'+Array.from(tagSet).sort((a,b)=>a.localeCompare(b,'it',{sensitivity:'base'})).map(t=>`<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join('');
+    function pickFromSearch(){
+      const q = document.getElementById('search').value.trim().toLowerCase();
+      if (!q) { toast('Inserisci un termine','err'); return; }
+      if (state.indexById.has(q)){ setCenter(q); layoutAndRender(); return; }
+      const hit = state.notes.find(n=>{
+        const hay = [n.Title,n.Text,n.Tags,n.Note,n.ID].map(x=>String(x||'').toLowerCase()).join(' ');
+        return hay.includes(q);
+      });
+      if (!hit){ toast('Nessuna nota trovata','err'); return; }
+      setCenter(hit.ID); layoutAndRender();
+    }
 
-        const varSet=new Set(); state.data.forEach(d=>{ if(d.Variable) varSet.add(String(d.Variable)); });
-        document.getElementById('dataVarFilter').innerHTML='<option value="">Tutte le variabili</option>'+Array.from(varSet).sort().map(v=>`<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join('');
-      }
-
-      function getFilteredNotes(){
-        const search=document.getElementById('notesSearch').value.trim().toLowerCase();
-        const typeFilter=document.getElementById('notesTypeFilter').value;
-        const tagFilter=document.getElementById('notesTagFilter').value;
-        return state.notes.filter(n=>{
-          if(typeFilter && String(n.Type)!==typeFilter) return false;
-          if(tagFilter){
-            const tags=String(n.Tags||'').split(',').map(t=>t.trim().toLowerCase()).filter(Boolean);
-            if(!tags.includes(tagFilter.toLowerCase())) return false;
-          }
-          if(!search) return true;
-          const hay=[n.Title,n.DOI,n.Text,n.URL,n.Link,n.Tags,n.Note,n.ImageLink].map(x=>String(x||'').toLowerCase()).join(' ');
-          return hay.includes(search);
-        });
-      }
-
-      function getFilteredData(){
-        const search=document.getElementById('dataSearch').value.trim().toLowerCase();
-        const varFilter=document.getElementById('dataVarFilter').value;
-        return state.data.filter(d=>{
-          if(varFilter && String(d.Variable)!==varFilter) return false;
-          if(!search) return true;
-          const hay=[d.Variable,d.DOI,d.URL,d.Notes,d.Unit].map(x=>String(x||'').toLowerCase()).join(' ');
-          return hay.includes(search);
-        });
-      }
-
-      /* RENDER NOTES: ogni articolo = banda orizzontale a tutta larghezza; dentro griglia uniforme */
-      function renderNotes(){
-        const filtered=getFilteredNotes();
-        const groups=groupBy(filtered,x=>String(x.DOI||'Senza DOI'));
-        const container=document.getElementById('notesGroups'); container.innerHTML='';
-
-        Object.keys(groups).sort().forEach(doi=>{
-          const items=groups[doi];
-          const title=items[0].Title||doi||'Senza titolo';
-
-          const box=document.createElement('div'); box.className='group';
-          box.innerHTML=`<h3><span class="clamp-2" style="max-width:82%">${escapeHtml(title)}</span> <span class="meta">${items.length}</span></h3>`;
-
-          const grid=document.createElement('div'); grid.className='items-grid';
-
-          items.forEach(item=>{
-            const id=String(item.ID||''); const linked=String(item.LinkedIDs||'');
-            const tags=String(item.Tags||'').split(',').map(t=>t.trim()).filter(Boolean);
-            const link=String(item.Link||item.URL||'');
-            const noteText=String(item.Note||''); const img=String(item.ImageLink||'');
-
-            const card=document.createElement('div');
-            card.className='note-card'+(collapsed.has(id)||collapseAll?' collapsed':'');
-            card.setAttribute('data-id', id);
-
-            const imgHtml = img
-              ? `<img class="thumb" src="${escapeAttr(img)}" alt="img ${escapeAttr(id)}">`
-              : `<div class="noimg">no img</div>`;
-
-            card.innerHTML = `
-              ${imgHtml}
-              <div class="card-body">
-                <div class="title-row">
-                  <span class="type">${escapeHtml(String(item.Type||'SENZA TIPO'))}</span>
-                  <span> — ${escapeHtml(item.Title||'(senza titolo)')}</span>
-                </div>
-                <div class="meta">DOI: ${escapeHtml(String(item.DOI||''))}</div>
-                <div class="fulltext clamp-3">${escapeHtml(String(item.Text||''))}</div>
-                ${tags.length?`<div class="tags">${tags.map(t=>`<span class="tag">${escapeHtml(t)}</span>`).join('')}</div>`:''}
-                ${noteText?`<div class="meta"><b>Nota:</b> ${escapeHtml(noteText)}</div>`:''}
-                <div class="linkwrap meta">${link?`<a href="${escapeAttr(link)}" target="_blank" rel="noopener">Apri sorgente</a>`:''}</div>
-                <div class="ids meta">ID: <code>${escapeHtml(id||'(manca)')}</code> · Linked: ${escapeHtml(linked)}</div>
-              </div>
-              <div class="actions-row">
-                <button class="btn" data-open-linker ${id?'':'disabled'}>${id?'Linka…':'Genera ID per abilitare'}</button>
-                ${id?`<a class="btn" href="linked.html?id=${encodeURIComponent(id)}" target="_blank" rel="noopener">Visualizza linked</a>`:`<button class="btn" disabled>Visualizza linked</button>`}
-                ${id?`<button class="btn" data-details="${escapeAttr(id)}">Dettagli</button>`:`<button class="btn" disabled>Dettagli</button>`}
-                ${id?`<button class="btn" data-collapse="${escapeAttr(id)}">${(collapsed.has(id)||collapseAll)?'Espandi':'Compatta'}</button>`:`<button class="btn" disabled>Compatta</button>`}
-              </div>`;
-
-            const openBtn=card.querySelector('[data-open-linker]'); if(openBtn) openBtn.onclick=()=>openLinkWidget(item);
-            const detBtn =card.querySelector('[data-details]');   if(detBtn)  detBtn.onclick=()=>openDetail(item);
-            const colBtn =card.querySelector('[data-collapse]');  if(colBtn)  colBtn.onclick=(e)=>toggleCollapsed(id,e.currentTarget,card);
-
-            grid.appendChild(card);
-          });
-
-          box.appendChild(grid);
-          container.appendChild(box);
-        });
-      }
-
-      function toggleCollapsed(id, btn, itemEl){
-        if(collapseAll){ collapseAll=false; collapsed.clear(); }
-        else{ if(collapsed.has(id)) collapsed.delete(id); else collapsed.add(id); }
-        if(itemEl){
-          itemEl.classList.toggle('collapsed', collapsed.has(id));
-          btn.textContent = itemEl.classList.contains('collapsed') ? 'Espandi' : 'Compatta';
-        }else{
-          renderNotes();
-        }
-      }
-
-      function toggleAllCollapsed(){
-        collapseAll=!collapseAll;
-        if(collapseAll){
-          collapsed.clear();
-          getFilteredNotes().forEach(n=>{ if(n.ID) collapsed.add(String(n.ID)); });
-        }else{
-          collapsed.clear();
-        }
-        renderNotes();
-      }
-
-      function renderData(){
-        const filtered=getFilteredData();
-        const groups=groupBy(filtered,x=>String(x.Variable||'Senza variabile'));
-        const container=document.getElementById('dataGroups'); container.innerHTML='';
-        Object.keys(groups).sort().forEach(variable=>{
-          const box=document.createElement('div'); box.className='group';
-          box.innerHTML=`<h3><span>${escapeHtml(variable)}</span> <span class="meta">${groups[variable].length}</span></h3>`;
-          const grid=document.createElement('div'); grid.className='items-grid';
-          groups[variable].forEach(item=>{
-            const link=String(item.Link||item.URL||''); const a=link?`<a href="${escapeAttr(link)}" target="_blank" rel="noopener">Apri</a>`:'';
-            const val=String(item.Value||''); const unit=String(item.Unit||''); const mean=String(item.Mean||''); const std=String(item.StdDev||''); const n=String(item.N||'');
-            const card=document.createElement('div'); card.className='note-card';
-            card.innerHTML=`
-              <div class="card-body">
-                <div><b>${escapeHtml(val)} ${escapeHtml(unit)}</b> <span class="meta">N=${escapeHtml(n)} · mean=${escapeHtml(mean)} · sd=${escapeHtml(std)}</span></div>
-                <div class="meta">DOI: ${escapeHtml(String(item.DOI||''))}</div>
-                <div class="clamp-3">${escapeHtml(String(item.Notes||''))}</div>
-                <div class="meta" style="margin-top:8px">${a}</div>
-              </div>`;
-            grid.appendChild(card);
-          });
-          box.appendChild(grid);
-          container.appendChild(box);
-        });
-      }
-
-      function openDetail(item){
-        if(!item) return;
-        document.getElementById('detTitle').textContent = String(item.Title||'(senza titolo)');
-        document.getElementById('detId').textContent    = String(item.ID||'');
-        document.getElementById('detDoi').textContent   = String(item.DOI||'');
-        document.getElementById('detType').textContent  = String(item.Type||'');
-        document.getElementById('detTags').textContent  = String(item.Tags||'');
-        document.getElementById('detNote').textContent  = String(item.Note||'');
-        document.getElementById('detText').textContent  = String(item.Text||'');
-        const link = String(item.Link||item.URL||'');
-        document.getElementById('detLink').innerHTML = link ? `<a href="${escapeAttr(link)}" target="_blank" rel="noopener">${escapeHtml(link)}</a>` : '';
-        const img = String(item.ImageLink||'');
-        const imgEl = document.getElementById('detImg');
-        if(img){ imgEl.src=img; imgEl.style.display='block'; imgEl.alt='Immagine '+String(item.ID||''); } else { imgEl.removeAttribute('src'); imgEl.style.display='none'; }
-        document.getElementById('detailOverlay').style.display='flex';
-      }
-      function closeDetail(){ document.getElementById('detailOverlay').style.display='none'; }
-
-      function groupBy(arr,keyFn){ return arr.reduce((acc,x)=>{ const k=keyFn(x); (acc[k] ||= []).push(x); return acc; },{}); }
-
-      const NOTES_HEADERS=['CreatedAt','URL','Link','Title','DOI','Text','Tags','Type','ClientTimestamp','ID','LinkedIDs','Note','ImageLink'];
-      const DATA_HEADERS=['CreatedAt','DOI','URL','Link','Variable','Value','Unit','N','Mean','StdDev','Notes','ClientTimestamp'];
-
-      function exportNotesCsv(){ const rows=getFilteredNotes(); const csv=toCsv(rows,NOTES_HEADERS); downloadCsv(csv,`notes_${timestamp()}.csv`); }
-      function exportDataCsv(){ const rows=getFilteredData(); const csv=toCsv(rows,DATA_HEADERS); downloadCsv(csv,`data_${timestamp()}.csv`); }
-
-      function toCsv(rows,headers){
-        const esc=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"';
-        const lines=[headers.map(h=>'"'+h+'"').join(',')];
-        for(const r of rows){ lines.push(headers.map(h=>esc(r[h])).join(',')); }
-        return lines.join('\r\n');
-      }
-      function downloadCsv(text,filename){
-        const blob=new Blob([text],{type:'text/csv;charset=utf-8;'}); const url=URL.createObjectURL(blob);
-        const a=document.createElement('a'); a.href=url; a.download=filename; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
-      }
-
-      function timestamp(){ const d=new Date(); const pad=n=>String(n).padStart(2,'0'); return `${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`; }
-      function escapeHtml(str){ return String(str).replace(/[&<>"']/g,s=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s])); }
-      function escapeAttr(str){ return escapeHtml(str).replace(/"/g,'&quot;'); }
-
-      function jsonp(baseUrl){
-        return new Promise((resolve,reject)=>{
-          try{
-            const url=new URL(baseUrl); const cb='cb_'+Math.random().toString(36).slice(2);
-            url.searchParams.set('callback',cb);
-            const s=document.createElement('script'); let done=false;
-            window[cb]=(data)=>{ done=true; cleanup(); resolve(data); };
-            s.src=url.toString(); s.onerror=(e)=>{ cleanup(); reject(e); };
-            document.body.appendChild(s);
-            const t=setTimeout(()=>{ if(!done){ cleanup(); reject(new Error('JSONP timeout')); } },12000);
-            function cleanup(){ try{ delete window[cb]; }catch{} try{ s.remove(); }catch{} clearTimeout(t); }
-          }catch(err){ reject(err); }
-        });
-      }
-
-      function showToast(message,kind='info',timeout=3000){
+    function normalizeIdList(s){
+      return String(s||'').split(/[\s,;]+/).map(x=>x.trim()).filter(Boolean);
+    }
+    function escapeHtml(str){return String(str).replace(/[&<>"']/g, s=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]));}
+    function escapeAttr(str){return escapeHtml(str).replace(/"/g,'&quot;')}
+    function toast(msg, kind='info', t=2500){
+      const c = document.getElementById('toastc');
+      const el = document.createElement('div'); el.className='toast '+(kind||'info'); el.textContent=msg;
+      c.appendChild(el); setTimeout(()=>{ try{ el.remove(); }catch{} }, t);
+      el.addEventListener('click', ()=>{ try{ el.remove(); }catch{} });
+    }
+    function jsonp(baseUrl){
+      return new Promise((resolve,reject)=>{
         try{
-          const c=document.getElementById('toastContainer'); if(!c) return alert(message);
-          const el=document.createElement('div'); el.className='toast '+(kind||'info'); el.textContent=String(message);
-          c.appendChild(el); const t=setTimeout(()=>{ try{ el.remove(); }catch{} }, timeout||3000);
-          el.addEventListener('click',()=>{ clearTimeout(t); try{ el.remove(); }catch{} });
-        }catch(e){ console.warn('toast error',e); }
-      }
-
-      let linkOrigin=null, linkSelection=new Set();
-
-      function openLinkWidget(item){
-        if(!item||!item.ID) return;
-        linkOrigin=item;
-        linkSelection=new Set(String(item.LinkedIDs||'').split(',').map(s=>s.trim()).filter(Boolean));
-        document.getElementById('lwSourceId').textContent=String(item.ID);
-        document.getElementById('lwSearch').value=''; renderLinkList();
-        document.getElementById('linkOverlay').style.display='flex';
-        setTimeout(()=>document.getElementById('lwSearch').focus(),0);
-        document.getElementById('lwSearch').oninput=renderLinkList;
-      }
-      function closeLinkWidget(){
-        document.getElementById('linkOverlay').style.display='none';
-        document.getElementById('lwList').innerHTML=''; document.getElementById('lwSelected').innerHTML=''; document.getElementById('lwCount').textContent='0';
-        linkOrigin=null; linkSelection.clear();
-      }
-      function renderLinkList(){
-        const q=document.getElementById('lwSearch').value.trim().toLowerCase();
-        const list=document.getElementById('lwList'); list.innerHTML='';
-        state.notes.forEach(n=>{
-          const id=String(n.ID||''); if(!id) return; if(linkOrigin && id===String(linkOrigin.ID)) return;
-          const hay=[n.Title,n.Text,n.Tags,n.Note,n.ImageLink].map(x=>String(x||'').toLowerCase()).join(' ');
-          if(q && !hay.includes(q)) return;
-          const checked=linkSelection.has(id)?'checked':'';
-          const tagsHtml=String(n.Tags||'').split(',').map(t=>t.trim()).filter(Boolean).map(t=>`<span class="tag">${escapeHtml(t)}</span>`).join(' ');
-          const img=String(n.ImageLink||''); const imgHtml=img?`<img class="thumb" src="${escapeAttr(img)}" alt="img ${escapeAttr(id)}">`:`<div class="noimg">no img</div>`;
-          const div=document.createElement('div'); div.className='lw-item';
-          div.innerHTML=`
-            <label style="display:grid;grid-template-columns:24px 96px 1fr;gap:10px;align-items:flex-start;">
-              <input class="lw-check" type="checkbox" value="${escapeAttr(id)}" ${checked} style="margin-top:6px;">
-              <div>${imgHtml}</div>
-              <div>
-                <div class="t clamp-2" style="font-weight:700">${escapeHtml(n.Title||'(senza titolo)')}</div>
-                <div class="muted clamp-2">${escapeHtml(n.Text||'')}</div>
-                ${n.Note?`<div class="muted"><b>Nota:</b> ${escapeHtml(n.Note)}</div>`:''}
-                ${tagsHtml?`<div class="tags" style="margin-top:6px;">${tagsHtml}</div>`:''}
-                <div class="muted" style="margin-top:6px;">ID: <code>${escapeHtml(id)}</code></div>
-              </div>
-            </label>`;
-          list.appendChild(div);
-        });
-        list.onchange=(e)=>{
-          const t=e.target; if(t && t.classList.contains('lw-check')){ const id=String(t.value); if(t.checked) linkSelection.add(id); else linkSelection.delete(id); updateSelectedPreview(); }
-        };
-        updateSelectedPreview();
-      }
-      function updateSelectedPreview(){
-        const sel=Array.from(linkSelection);
-        document.getElementById('lwCount').textContent=String(sel.length);
-        document.getElementById('lwSelected').innerHTML=sel.map(id=>`<span class="pill">ID ${escapeHtml(id)}</span>`).join(' ');
-      }
-      async function confirmLink(){
-        if(!linkOrigin||!linkOrigin.ID){ closeLinkWidget(); return; }
-        const checked=Array.from(linkSelection);
-        showToast('Invio dei link al server…','info',2000);
-        try{
-          const url=new URL(DEFAULT_APPS_URL); url.searchParams.set('mode','updateLinks'); url.searchParams.set('id',String(linkOrigin.ID)); url.searchParams.set('linkedIds',checked.join(','));
-          const res=await jsonp(url.toString());
-          if(!res||res.ok!==true){ showToast('Errore: risposta non valida dal server','err',5000); return; }
-          await loadAll(); closeLinkWidget(); showToast('Link salvati sul server','ok',3500);
-        }catch(err){ console.error('confirmLink error',err); showToast('Errore di rete durante il salvataggio','err',5000); }
-      }
-
-      async function generateIds(){
-        try{
-          if(!confirm('Assegnare un ID alle note senza ID?')) return;
-          const url=new URL(DEFAULT_APPS_URL); url.searchParams.set('mode','assignIds');
-          const data=await jsonp(url.toString());
-          const assigned=data&&typeof data.assigned==='number'?data.assigned:null;
-          showToast(typeof assigned==='number'?`Assegnati ${assigned} ID`:'Assegnazione ID completata','ok',3500);
-          await loadAll();
-        }catch(e){ console.error('Errore generateIds',e); showToast('Errore durante la generazione degli ID','err',5000); }
-      }
-    </script>
-  </body>
+          const url = new URL(baseUrl); const cb='cb_'+Math.random().toString(36).slice(2);
+          url.searchParams.set('callback', cb);
+          const s=document.createElement('script'); let done=false;
+          window[cb]=(data)=>{ done=true; cleanup(); resolve(data); };
+          s.src=url.toString(); s.onerror=(e)=>{ cleanup(); reject(e); };
+          document.body.appendChild(s);
+          const t=setTimeout(()=>{ if(!done){ cleanup(); reject(new Error('JSONP timeout')); } },12000);
+          function cleanup(){ try{ delete window[cb]; }catch{} try{ s.remove(); }catch{} clearTimeout(t); }
+        }catch(err){ reject(err); }
+      });
+    }
+  </script>
+</body>
 </html>
