@@ -3,132 +3,93 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Article Note Saver - Dashboard</title>
+    <title>Article Note Saver - Appunti</title>
     <style>
       :root {
-        --bg: #f6f7fb;
-        --panel: #ffffff;
-        --muted: #64748b;
-        --text: #0f172a;
-        --accent: #2563eb;
-        --accent2: #10b981;
-        --ring: #93c5fd;
-        --border: #e5e7eb;
-        --border-strong: #cbd5e1;
+        --bg: #f6f7fb; --panel: #ffffff; --muted: #64748b; --text: #0f172a;
+        --accent: #2563eb; --accent2: #10b981; --ring: #93c5fd;
+        --border: #e5e7eb; --border-strong: #cbd5e1;
       }
-
-      * { box-sizing: border-box; transition: all .18s ease; }
-      html, body { height: 100%; }
-      body {
-        margin: 0;
-        font-family: system-ui, Segoe UI, Roboto, Arial, sans-serif;
+      *{ box-sizing:border-box; transition:all .18s ease; }
+      html,body{ height:100%; }
+      body{
+        margin:0; font-family: system-ui, Segoe UI, Roboto, Arial, sans-serif;
         background: radial-gradient(1200px 800px at 20% -10%, #eef2ff 0%, #f8fafc 40%, var(--bg) 100%);
-        color: var(--text);
-        line-height: 1.55;
-        letter-spacing: .1px;
+        color:var(--text); line-height:1.55; letter-spacing:.1px;
       }
-      :focus-visible { outline: 3px solid var(--ring); outline-offset: 2px; border-radius: 10px; }
+      :focus-visible{ outline:3px solid var(--ring); outline-offset:2px; border-radius:10px; }
 
-      /* Header */
-      .header {
-        padding: 22px;
-        border-bottom: 1px solid #dbeafe;
+      .header{
+        padding:22px; border-bottom:1px solid #dbeafe;
         background:
           linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,0)) 0 0/100% 100%,
           linear-gradient(90deg, var(--accent) 0%, var(--accent2) 100%);
-        color: #fff;
+        color:#fff;
       }
-      .header h1 { margin: 0; font-size: 24px; font-weight: 800; letter-spacing: .2px; }
-      .tabs { display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
-      .tabs button {
-        padding: 10px 16px; border-radius: 999px; background: #ffffff2b;
-        color: #fff; border: 1px solid #ffffff55; cursor: pointer; font-size: 14px; backdrop-filter: blur(2px);
+      .header h1{ margin:0; font-size:24px; font-weight:800; letter-spacing:.2px; }
+      .tabs{ display:flex; gap:10px; margin-top:12px; flex-wrap:wrap; }
+      .tabs button{
+        padding:10px 16px; border-radius:999px; background:#ffffff2b;
+        color:#fff; border:1px solid #ffffff55; cursor:pointer; font-size:14px; backdrop-filter: blur(2px);
       }
-      .tabs button:hover { background: #ffffff45; }
-      .tabs button.active { background: #fff; color: var(--accent); font-weight: 700; }
+      .tabs button:hover{ background:#ffffff45; }
+      .tabs button.active{ background:#fff; color:var(--accent); font-weight:700; }
 
-      /* Full-width content: ogni articolo occupa una banda orizzontale */
-      main { padding: 24px 28px; max-width: none; margin: 0; }
+      main{ padding:24px 28px; max-width:none; margin:0; }
 
-      /* Filters */
-      .filters {
-        display: grid;
-        grid-template-columns: 1fr repeat(2, minmax(180px, 240px)) auto auto auto;
-        gap: 12px;
-        margin-bottom: 20px;
-      }
-      @media (max-width: 980px) { .filters { grid-template-columns: 1fr 1fr; } }
-      .filters input, .filters select {
-        padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border);
-        background: #ffffff; color: var(--text); font-size: 14px; box-shadow: 0 1px 0 rgba(0,0,0,.02);
-      }
-      .filters input::placeholder { color: #94a3b8; }
-      .filters button {
-        padding: 10px 14px; border: 1px solid var(--border-strong); border-radius: 10px;
-        background: #fff; color: var(--text); font-weight: 600; cursor: pointer; font-size: 14px;
-      }
-      .filters button:hover { background: #f3f4f6; }
-      .filters #notesExportCsv, .filters #dataExportCsv { background: var(--accent); border-color: var(--accent); color: #fff; }
-      .filters #notesExportCsv:hover, .filters #dataExportCsv:hover { background: #1d4ed8; }
-
-      /* BANDS: ogni .group è una banda piena larghezza; dentro, griglia uniforme di note */
-      .groups {
-        display: flex;
-        flex-direction: column;     /* articoli impilati verticalmente in bande */
-        gap: 22px;
-        width: 100%;
-      }
-      .group {
-        width: 100%;
-        background: var(--panel);
-        border: 1px solid var(--border);
-        border-radius: 16px;
-        overflow: hidden;
-        box-shadow: 0 1px 0 rgba(15,23,42,0.02), 0 10px 24px -18px rgba(2,6,23,0.3);
-      }
-      .group:hover { transform: translateY(-2px); box-shadow: 0 14px 30px -14px rgba(2,6,23,.35); }
-      .group h3 {
-        margin: 0; padding: 14px 16px; border-bottom: 1px solid var(--border);
-        font-size: 16px; font-weight: 700;
-        background: linear-gradient(90deg, var(--accent) 0%, var(--accent2) 100%);
-        color: #fff; display: flex; gap: 8px; align-items: center; justify-content: space-between;
-      }
-      .group h3 .meta {
-        font-weight: 600; opacity: .95; font-size: 12px; padding: 2px 8px;
-        background: #ffffff2b; border: 1px solid #ffffff55; border-radius: 999px;
-      }
-
-      /* Griglia uniforme di note all’interno della banda */
-      .items-grid{
+      .filters{
         display:grid;
-        grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); /* riempi orizzontalmente tutta la banda */
-        grid-auto-rows: 1fr;          /* altezze uniformi per riga */
-        gap:14px;
-        padding:12px;
-        align-items: stretch;         /* tutte le card stessa altezza in riga */
+        grid-template-columns:1fr repeat(2, minmax(180px, 240px)) auto auto;
+        gap:12px; margin-bottom:20px;
+      }
+      @media (max-width:980px){ .filters{ grid-template-columns:1fr 1fr; } }
+      .filters input, .filters select{
+        padding:10px 12px; border-radius:10px; border:1px solid var(--border);
+        background:#fff; color:var(--text); font-size:14px; box-shadow:0 1px 0 rgba(0,0,0,.02);
+      }
+      .filters input::placeholder{ color:#94a3b8; }
+      .filters button{
+        padding:10px 14px; border:1px solid var(--border-strong); border-radius:10px;
+        background:#fff; color:var(--text); font-weight:600; cursor:pointer; font-size:14px;
+      }
+      .filters button:hover{ background:#f3f4f6; }
+      .filters #notesExportCsv{ background:var(--accent); border-color:var(--accent); color:#fff; }
+      .filters #notesExportCsv:hover{ background:#1d4ed8; }
+
+      .groups{ display:flex; flex-direction:column; gap:22px; width:100%; }
+      .group{
+        width:100%; background:var(--panel); border:1px solid var(--border);
+        border-radius:16px; overflow:hidden;
+        box-shadow:0 1px 0 rgba(15,23,42,0.02), 0 10px 24px -18px rgba(2,6,23,0.3);
+      }
+      .group:hover{ transform:translateY(-2px); box-shadow:0 14px 30px -14px rgba(2,6,23,.35); }
+      .group h3{
+        margin:0; padding:14px 16px; border-bottom:1px solid var(--border);
+        font-size:16px; font-weight:700;
+        background: linear-gradient(90deg, var(--accent) 0%, var(--accent2) 100%);
+        color:#fff; display:flex; gap:8px; align-items:center; justify-content:space-between;
+      }
+      .group h3 .meta{
+        font-weight:600; opacity:.95; font-size:12px; padding:2px 8px;
+        background:#ffffff2b; border:1px solid #ffffff55; border-radius:999px;
+      }
+
+      .items-grid{
+        display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr));
+        grid-auto-rows:1fr; gap:14px; padding:12px; align-items:stretch;
       }
 
       .note-card{
-        background:#fff;
-        border:1px solid #e5e7eb;
-        border-radius:12px;
-        box-shadow:0 2px 8px rgba(0,0,0,.06);
-        overflow:hidden;
-        display:flex;
-        flex-direction:column;
-        height:100%;                  /* riempi la cella */
+        background:#fff; border:1px solid #e5e7eb; border-radius:12px;
+        box-shadow:0 2px 8px rgba(0,0,0,.06); overflow:hidden; display:flex; flex-direction:column; height:100%;
+        border-left:4px solid var(--type-color, var(--border-strong));
+        background: linear-gradient(0deg, var(--type-bg, transparent), var(--type-bg, transparent)), #fff;
       }
       .note-card:hover{ transform:translateY(-2px); box-shadow:0 8px 22px rgba(0,0,0,.09); }
-      .note-card .thumb{ width:100%; height:140px; border-radius:0; margin:0; }
+      .note-card .thumb{ width:100%; height:140px; border-radius:0; margin:0; object-fit:cover; }
       .note-card .card-body{ padding:12px; display:flex; flex-direction:column; gap:8px; flex:1; }
       .note-card .title-row{ font-size:14px; font-weight:800; line-height:1.25 }
-      .note-card { 
-        border-left:4px solid var(--type-color, var(--border-strong));
-        background:
-          linear-gradient(0deg, var(--type-bg, transparent), var(--type-bg, transparent)),
-          #fff;
-      }
-      .note-card .type{ 
+      .note-card .type{
         font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.3px;
         color: var(--type-color, #2563eb);
         background: var(--type-pill-bg, #eef6ff);
@@ -138,15 +99,10 @@
       .note-card .meta{ color:#6b7280; font-size:12px }
       .note-card .fulltext{ font-size:13px; color:#0f172a }
       .note-card .note-box{
-        background: var(--type-pill-bg, #eef6ff);
-        border: 1px solid var(--type-color, #93c5fd);
-        border-left-width: 4px;
-        padding: 8px 10px; border-radius: 10px; color:#0b1220;
+        background: var(--type-pill-bg, #eef6ff); border:1px solid var(--type-color, #93c5fd);
+        border-left-width:4px; padding:8px 10px; border-radius:10px; color:#0b1220;
       }
-      .note-card .text-box{
-        background:#f8fafc; border:1px solid var(--border);
-        padding:8px 10px; border-radius:10px;
-      }
+      .note-card .text-box{ background:#f8fafc; border:1px solid var(--border); padding:8px 10px; border-radius:10px; }
       .note-card .tags{ display:flex; gap:6px; flex-wrap:wrap }
       .note-card .tag{ font-size:11px; color:#0b1220; background:#ecfeff; padding:3px 8px; border-radius:999px; border:1px solid #bae6fd }
       .note-card .animal-tag{ font-size:11px; background:#fff7ed; border:1px solid #fed7aa; color:#9a3412; padding:3px 8px; border-radius:999px }
@@ -154,94 +110,71 @@
       .note-card .btn{ padding:6px 10px; font-size:12px; border-radius:8px; border:1px solid #d1d5db; background:#fff; cursor:pointer }
       .note-card .btn:hover{ background:#f3f4f6 }
       .note-card .btn.primary{ background:#2563eb; color:#fff; border-color:#2563eb }
-      /* Pair values (dato vs controllo) */
-      .pair-grid{ display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
-      .pair-box{ border:1px solid var(--border); background:#fafafa; border-radius:10px; padding:8px 10px; }
-      .pair-box .t{ font-size:12px; color:#6b7280; font-weight:700; }
-      .pair-box .v{ font-size:14px; color:#0f172a; }
+
       .note-card.collapsed .fulltext,
       .note-card.collapsed .linkwrap,
       .note-card.collapsed .ids{ display:none }
 
-      .clamp-2 { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
-      .clamp-3 { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; }
+      .clamp-2{ display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; }
+      .clamp-3{ display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:3; overflow:hidden; }
+      .linkwrap a{ color:#0ea5e9; text-decoration:none; font-weight:700; }
+      .linkwrap a:hover{ text-decoration:underline; }
+      .ids{ font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
 
-      .linkwrap a { color: #0ea5e9; text-decoration: none; font-weight: 700; }
-      .linkwrap a:hover { text-decoration: underline; }
+      .btn{ padding:8px 14px; border-radius:10px; border:1px solid var(--border-strong); background:#fff; cursor:pointer; font-size:13px; font-weight:600; }
+      .btn:hover{ background:#f3f4f6; }
+      .btn[disabled]{ opacity:.5; cursor:not-allowed; }
+      .btn.primary{ background:var(--accent); color:#fff; border-color:var(--accent); }
+      .btn.primary:hover{ background:#1d4ed8; }
 
-      .ids { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
-
-      .btn {
-        padding: 8px 14px; border-radius: 10px; border: 1px solid var(--border-strong);
-        background: #fff; cursor: pointer; font-size: 13px; font-weight: 600;
+      .overlay{ position:fixed; inset:0; background:rgba(2,6,23,.52); display:none; align-items:center; justify-content:center; z-index:99999; }
+      .sheet{
+        width:min(880px,96vw); max-height:min(86vh,900px); overflow:auto; background:#fff; border-radius:16px;
+        box-shadow:0 14px 40px rgba(2, 6, 23, .36); padding:18px; border-top:6px solid var(--type-color, var(--accent));
       }
-      .btn:hover { background: #f3f4f6; }
-      .btn[disabled] { opacity: .5; cursor: not-allowed; }
-      .btn.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
-      .btn.primary:hover { background: #1d4ed8; }
-
-      /* Overlay */
-      .overlay {
-        position: fixed; inset: 0; background: rgba(2,6,23,.52);
-        display: none; align-items: center; justify-content: center; z-index: 99999;
-      }
-      .sheet {
-        width: min(880px, 96vw); max-height: min(86vh, 900px);
-        overflow: auto; background: #fff; border-radius: 16px;
-        box-shadow: 0 14px 40px rgba(2, 6, 23, .36); padding: 18px;
-        border-top: 6px solid var(--type-color, var(--accent));
-      }
-      .sheet .hd { display: flex; gap: 12px; align-items: center; margin-bottom: 10px; padding-bottom: 8px; border-bottom:1px solid var(--border); }
-      .sheet .hd b { flex: 1; font-size: 18px; }
-      .sheet .grid { display: grid; grid-template-columns: 160px 1fr; gap: 10px; }
-      .kv .k { font-weight: 800; color: #0b1220; }
-      .kv .v { color: #1f2937; }
-      .imgwide {
-        width: 100%; max-height: 320px; object-fit: cover; border-radius: 12px; border: 1px solid var(--border);
-        background: #f7fafc; margin-bottom: 10px;
-      }
-      /* Evidenza in dettaglio */
+      .sheet .hd{ display:flex; gap:12px; align-items:center; margin-bottom:10px; padding-bottom:8px; border-bottom:1px solid var(--border); }
+      .sheet .hd b{ flex:1; font-size:18px; }
+      .sheet .grid{ display:grid; grid-template-columns:160px 1fr; gap:10px; }
+      .kv .k{ font-weight:800; color:#0b1220; }
+      .kv .v{ color:#1f2937; }
+      .imgwide{ width:100%; max-height:320px; object-fit:cover; border-radius:12px; border:1px solid var(--border); background:#f7fafc; margin-bottom:10px; }
       #detNote{ background: var(--type-pill-bg, #eef6ff); border:1px solid var(--type-color, #93c5fd); border-left-width:4px; padding:8px 10px; border-radius:10px; }
       #detText{ background:#f8fafc; border:1px solid var(--border); padding:10px 12px; border-radius:12px; white-space:pre-wrap; }
 
-      /* Link widget */
-      .link-widget {
-        width: min(1100px, 96vw); height: min(78vh, 820px);
-        background: #fff; border-radius: 16px; overflow: hidden;
-        box-shadow: 0 14px 40px rgba(2,6,23,.36); display: grid; grid-template-columns: 1.2fr .8fr;
+      .link-widget{
+        width:min(1100px,96vw); height:min(78vh,820px);
+        background:#fff; border-radius:16px; overflow:hidden; box-shadow:0 14px 40px rgba(2,6,23,.36);
+        display:grid; grid-template-columns:1.2fr .8fr;
       }
-      .lw-header { grid-column: 1 / span 2; padding: 12px 14px; background: linear-gradient(90deg, var(--accent), var(--accent2)); color: #fff; display: flex; align-items: center; gap: 8px; }
-      .lw-header b { flex: 1; }
-      .lw-left { border-right: 1px solid var(--border); padding: 10px; overflow: auto; }
-      .lw-right { padding: 10px; overflow: auto; display: flex; flex-direction: column; }
-      .lw-search { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; background: #fff; }
-      .lw-list { margin-top: 10px; }
-      .lw-item { border-bottom: 1px solid #eef3f6; padding: 10px; }
-      .lw-item:hover { background: #f8fafc; }
-      .muted { color: #6b7280; font-size: 12px; }
-      .selected-list { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
-      .pill { display: inline-block; font-size: 12px; padding: 4px 8px; border-radius: 999px; background: #eef6ff; border: 1px solid var(--border-strong); }
+      .lw-header{ grid-column:1 / span 2; padding:12px 14px; background: linear-gradient(90deg, var(--accent), var(--accent2)); color:#fff; display:flex; align-items:center; gap:8px; }
+      .lw-header b{ flex:1; }
+      .lw-left{ border-right:1px solid var(--border); padding:10px; overflow:auto; }
+      .lw-right{ padding:10px; overflow:auto; display:flex; flex-direction:column; }
+      .lw-search{ width:100%; padding:10px 12px; border:1px solid var(--border); border-radius:10px; background:#fff; }
+      .lw-list{ margin-top:10px; }
+      .lw-item{ border-bottom:1px solid #eef3f6; padding:10px; }
+      .lw-item:hover{ background:#f8fafc; }
+      .muted{ color:#6b7280; font-size:12px; }
+      .selected-list{ display:flex; flex-direction:column; gap:6px; margin-top:8px; }
+      .pill{ display:inline-block; font-size:12px; padding:4px 8px; border-radius:999px; background:#eef6ff; border:1px solid var(--border-strong); }
 
-      /* Toast */
-      .toast-container { position: fixed; top: 16px; right: 16px; display: flex; flex-direction: column; gap: 8px; z-index: 100000; }
-      .toast {
-        min-width: 260px; max-width: 380px; background: #fff; border: 1px solid var(--border-strong);
-        border-left: 6px solid var(--accent); box-shadow: 0 6px 20px rgba(2,6,23,.18);
-        padding: 12px 14px; border-radius: 12px; font-size: 14px; color: var(--text);
+      .toast-container{ position:fixed; top:16px; right:16px; display:flex; flex-direction:column; gap:8px; z-index:100000; }
+      .toast{
+        min-width:260px; max-width:380px; background:#fff; border:1px solid var(--border-strong);
+        border-left:6px solid var(--accent); box-shadow:0 6px 20px rgba(2,6,23,.18);
+        padding:12px 14px; border-radius:12px; font-size:14px; color:var(--text);
       }
-      .toast.ok  { border-left-color: #16a34a; }
-      .toast.err { border-left-color: #dc2626; }
-      .toast.info{ border-left-color: var(--accent); }
+      .toast.ok{ border-left-color:#16a34a; }
+      .toast.err{ border-left-color:#dc2626; }
+      .toast.info{ border-left-color:var(--accent); }
     </style>
   </head>
   <body>
     <header class="header">
-      <h1>Article Note Saver - Dashboard</h1>
+      <h1>Article Note Saver — Appunti</h1>
       <div class="tabs" role="tablist" aria-label="Sezioni">
-
-                <button id="tabNotes" class="active" role="tab" aria-selected="true" aria-controls="notesPanel">Appunti</button>
-                <button id="openDataPageBtn" type="button" title="Apri pagina dati (nuova scheda)">Dati ↗</button>
-
+        <button id="tabNotes" class="active" role="tab" aria-selected="true" aria-controls="notesPanel">Appunti</button>
+        <button id="openDataPageBtn" type="button" title="Apri pagina dati (nuova scheda)">Dati ↗</button>
       </div>
     </header>
 
@@ -257,8 +190,6 @@
         </div>
         <div id="notesGroups" class="groups" aria-live="polite"></div>
       </section>
-
-
     </main>
 
     <!-- Overlay: Widget di linking -->
@@ -312,34 +243,50 @@
       </div>
     </div>
 
-    <!-- Toast container -->
     <div id="toastContainer" class="toast-container" aria-live="polite" aria-atomic="true"></div>
 
     <script>
       const DEFAULT_APPS_URL="https://script.google.com/macros/s/AKfycbyRXsW2jhj_NarPEyX5T8Yqf8U05qrZtPWReMwC9oW4dHTqXegnZhUmCwuYVmMXZ1uX/exec";
       const state={ notes:[], data:[] };
-      const collapsed = new Set();
-      let collapseAll=false;
+      const collapsed=new Set(); let collapseAll=false;
 
-      document.addEventListener('DOMContentLoaded',()=>{
-        document.getElementById('tabNotes').onclick=()=>switchTab('notes');
-        document.getElementById('tabData').onclick=()=>switchTab('data');
+      document.addEventListener('DOMContentLoaded', ()=>{
+        const tabNotes=document.getElementById('tabNotes');
+        if(tabNotes) tabNotes.onclick=()=>switchTab('notes');
 
-        document.getElementById('notesSearch').oninput=renderNotes;
-        document.getElementById('notesTypeFilter').onchange=renderNotes;
-        document.getElementById('notesTagFilter').onchange=renderNotes;
-        document.getElementById('dataSearch').oninput=renderData;
-        document.getElementById('dataVarFilter').onchange=renderData;
+        const openDataBtn=document.getElementById('openDataPageBtn');
+        if(openDataBtn) openDataBtn.onclick=()=>window.open('data.html','_blank','noopener');
 
-        document.getElementById('notesExportCsv').onclick=exportNotesCsv;
-        document.getElementById('dataExportCsv').onclick=exportDataCsv;
-        const genBtn=document.getElementById('generateIdsBtn'); if(genBtn) genBtn.onclick=generateIds;
-        document.getElementById('toggleAllCollapseBtn').onclick=toggleAllCollapsed;
+        const notesSearch=document.getElementById('notesSearch');
+        if(notesSearch) notesSearch.oninput=renderNotes;
 
-        document.getElementById('lwCloseBtn').onclick=closeLinkWidget;
-        document.getElementById('lwCancelBtn').onclick=closeLinkWidget;
-        document.getElementById('lwConfirmBtn').onclick=confirmLink;
-        document.getElementById('detCloseBtn').onclick=closeDetail;
+        const notesTypeFilter=document.getElementById('notesTypeFilter');
+        if(notesTypeFilter) notesTypeFilter.onchange=renderNotes;
+
+        const notesTagFilter=document.getElementById('notesTagFilter');
+        if(notesTagFilter) notesTagFilter.onchange=renderNotes;
+
+        const notesExportCsv=document.getElementById('notesExportCsv');
+        if(notesExportCsv) notesExportCsv.onclick=exportNotesCsv;
+
+        const genBtn=document.getElementById('generateIdsBtn');
+        if(genBtn) genBtn.onclick=generateIds;
+
+        const toggleAllCollapseBtn=document.getElementById('toggleAllCollapseBtn');
+        if(toggleAllCollapseBtn) toggleAllCollapseBtn.onclick=toggleAllCollapsed;
+
+        const lwCloseBtn=document.getElementById('lwCloseBtn');
+        if(lwCloseBtn) lwCloseBtn.onclick=closeLinkWidget;
+
+        const lwCancelBtn=document.getElementById('lwCancelBtn');
+        if(lwCancelBtn) lwCancelBtn.onclick=closeLinkWidget;
+
+        const lwConfirmBtn=document.getElementById('lwConfirmBtn');
+        if(lwConfirmBtn) lwConfirmBtn.onclick=confirmLink;
+
+        const detCloseBtn=document.getElementById('detCloseBtn');
+        if(detCloseBtn) detCloseBtn.onclick=closeDetail;
+
         document.addEventListener('keydown',(e)=>{ if(e.key==='Escape'){ closeLinkWidget(); closeDetail(); } });
 
         loadAll();
@@ -357,42 +304,41 @@
             state.notes=Array.isArray(data.notes)?data.notes:[]; state.data=Array.isArray(data.data)?data.data:[];
           }catch(e2){ console.error('Errore caricamento dati:',e2); showToast('Errore nel recupero dati dal server','err',5000); }
         }
-        populateFilters(); renderNotes(); renderData();
+        populateFilters(); renderNotes();
       }
 
       function switchTab(which){
-        const nBtn=document.getElementById('tabNotes'), dBtn=document.getElementById('tabData');
-        const nPanel=document.getElementById('notesPanel'), dPanel=document.getElementById('dataPanel');
-        if(which==='data'){
-          nBtn.classList.remove('active'); nBtn.setAttribute('aria-selected','false');
-          dBtn.classList.add('active'); dBtn.setAttribute('aria-selected','true');
-          nPanel.style.display='none'; dPanel.style.display='';
-        } else {
-          dBtn.classList.remove('active'); dBtn.setAttribute('aria-selected','false');
-          nBtn.classList.add('active'); nBtn.setAttribute('aria-selected','true');
-          dPanel.style.display='none'; nPanel.style.display='';
-        }
+        // Solo se in futuro reintrodurrai più pannelli in questa pagina
+        if(which!=='notes') return;
       }
 
       function populateFilters(){
         const typeSet=new Set(); state.notes.forEach(n=>{ if(n.Type) typeSet.add(String(n.Type)); });
-        document.getElementById('notesTypeFilter').innerHTML='<option value="">Tutti i type</option>'+Array.from(typeSet).sort().map(t=>`<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join('');
+        const typeSel=document.getElementById('notesTypeFilter');
+        if(typeSel){
+          typeSel.innerHTML='<option value="">Tutti i type</option>'+Array.from(typeSet).sort().map(t=>`<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join('');
+        }
 
         const tagSet=new Set();
         state.notes.forEach(n=>{
           String(n.Tags||'').split(',').forEach(t=>{ const v=t.trim(); if(v) tagSet.add(v); });
           const animal=String(n.Animal||'').trim(); if(animal) tagSet.add(animal);
         });
-        document.getElementById('notesTagFilter').innerHTML='<option value="">Tutti i tag</option>'+Array.from(tagSet).sort((a,b)=>a.localeCompare(b,'it',{sensitivity:'base'})).map(t=>`<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join('');
-
-        const varSet=new Set(); state.data.forEach(d=>{ if(d.Variable) varSet.add(String(d.Variable)); });
-        document.getElementById('dataVarFilter').innerHTML='<option value="">Tutte le variabili</option>'+Array.from(varSet).sort().map(v=>`<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join('');
+        const tagSel=document.getElementById('notesTagFilter');
+        if(tagSel){
+          tagSel.innerHTML='<option value="">Tutti i tag</option>'+Array.from(tagSet)
+            .sort((a,b)=>a.localeCompare(b,'it',{sensitivity:'base'}))
+            .map(t=>`<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join('');
+        }
       }
 
       function getFilteredNotes(){
-        const search=document.getElementById('notesSearch').value.trim().toLowerCase();
-        const typeFilter=document.getElementById('notesTypeFilter').value;
-        const tagFilter=document.getElementById('notesTagFilter').value;
+        const searchEl=document.getElementById('notesSearch');
+        const typeEl=document.getElementById('notesTypeFilter');
+        const tagEl=document.getElementById('notesTagFilter');
+        const search=(searchEl?searchEl.value:'').trim().toLowerCase();
+        const typeFilter=typeEl?typeEl.value:'';
+        const tagFilter=tagEl?tagEl.value:'';
         return state.notes.filter(n=>{
           if(typeFilter && String(n.Type)!==typeFilter) return false;
           if(tagFilter){
@@ -406,22 +352,11 @@
         });
       }
 
-      function getFilteredData(){
-        const search=document.getElementById('dataSearch').value.trim().toLowerCase();
-        const varFilter=document.getElementById('dataVarFilter').value;
-        return state.data.filter(d=>{
-          if(varFilter && String(d.Variable)!==varFilter) return false;
-          if(!search) return true;
-          const hay=[d.Variable,d.DOI,d.URL,d.Notes,d.Unit].map(x=>String(x||'').toLowerCase()).join(' ');
-          return hay.includes(search);
-        });
-      }
-
-      /* RENDER NOTES: ogni articolo = banda orizzontale a tutta larghezza; dentro griglia uniforme */
       function renderNotes(){
         const filtered=getFilteredNotes();
         const groups=groupBy(filtered,x=>String(x.DOI||'Senza DOI'));
-        const container=document.getElementById('notesGroups'); container.innerHTML='';
+        const container=document.getElementById('notesGroups'); if(!container) return;
+        container.innerHTML='';
 
         Object.keys(groups).sort().forEach(doi=>{
           const items=groups[doi];
@@ -432,7 +367,6 @@
 
           const grid=document.createElement('div'); grid.className='items-grid';
 
-          // Ordina le note per Type per raggruppare visivamente colori simili
           items.sort((a,b)=>{
             const ta=String(a.Type||'').toLowerCase();
             const tb=String(b.Type||'').toLowerCase();
@@ -441,19 +375,15 @@
           });
 
           items.forEach(item=>{
-            const id=String(item.ID||''); const linked=String(item.LinkedIDs||'');
-            const tags=String(item.Tags||'').split(',').map(t=>t.trim()).filter(Boolean);
-            const link=String(item.Link||item.URL||'');
-            const noteText=String(item.Note||''); const img=String(item.ImageLink||'');
-            const animal=String(item.Animal||'').trim();
+            const id=String(item.ID||''); const tags=String(item.Tags||'').split(',').map(t=>t.trim()).filter(Boolean);
+            const link=String(item.Link||item.URL||''); const noteText=String(item.Note||'');
+            const img=String(item.ImageLink||''); const animal=String(item.Animal||'').trim();
 
             const card=document.createElement('div');
             card.className='note-card'+(collapsed.has(id)||collapseAll?' collapsed':'');
             card.setAttribute('data-id', id);
 
-            const imgHtml = img
-              ? `<img class="thumb" src="${escapeAttr(img)}" alt="img ${escapeAttr(id)}">`
-              : ``;
+            const imgHtml = img ? `<img class="thumb" src="${escapeAttr(img)}" alt="img ${escapeAttr(id)}">` : ``;
 
             card.innerHTML = `
               <div class="title-row">
@@ -462,58 +392,29 @@
               ${imgHtml}
               <div class="card-body">
                 <div class="meta">DOI: ${escapeHtml(String(item.DOI||''))}</div>
-                ${noteText?`<div class=\"note-box\">${escapeHtml(noteText)}</div>`:''}
+                ${noteText?`<div class="note-box">${escapeHtml(noteText)}</div>`:''}
                 <div class="fulltext clamp-3 text-box">${escapeHtml(String(item.Text||''))}</div>
-                ${(animal||tags.length)?`<div class="tags">${animal?`<span class=\"tag animal-tag\">🐾 ${escapeHtml(animal)}</span>`:''}${tags.map(t=>`<span class=\"tag\">${escapeHtml(t)}</span>`).join('')}</div>`:''}
+                ${(animal||tags.length)?`<div class="tags">${animal?`<span class="tag animal-tag">🐾 ${escapeHtml(animal)}</span>`:''}${tags.map(t=>`<span class="tag">${escapeHtml(t)}</span>`).join('')}</div>`:''}
                 <div class="linkwrap meta">${link?`<a href="${escapeAttr(link)}" target="_blank" rel="noopener">Apri sorgente</a>`:''}</div>
               </div>
               <div class="actions-row">
                 <button class="btn" data-open-linker ${id?'':'disabled'}>${id?'Linka…':'Genera ID per abilitare'}</button>
                 ${id?`<a class="btn" href="linked.html?id=${encodeURIComponent(id)}" target="_blank" rel="noopener">Visualizza linked</a>`:`<button class="btn" disabled>Visualizza linked</button>`}
                 ${id?`<button class="btn" data-details="${escapeAttr(id)}">Dettagli</button>`:`<button class="btn" disabled>Dettagli</button>`}
-               ${id?`<button class="btn" data-collapse="${escapeAttr(id)}">${(collapsed.has(id)||collapseAll)?'Espandi':'Compatta'}</button>`:`<button class="btn" disabled>Compatta</button>`}
+                ${id?`<button class="btn" data-collapse="${escapeAttr(id)}">${(collapsed.has(id)||collapseAll)?'Espandi':'Compatta'}</button>`:`<button class="btn" disabled>Compatta</button>`}
               </div>`;
 
-             const openBtn=card.querySelector('[data-open-linker]'); if(openBtn) openBtn.onclick=()=>openLinkWidget(item);
-             const detBtn =card.querySelector('[data-details]');   if(detBtn)  detBtn.onclick=()=>openDetail(item);
-             const colBtn =card.querySelector('[data-collapse]');  if(colBtn)  colBtn.onclick=(e)=>toggleCollapsed(id,e.currentTarget,card);
+            const openBtn=card.querySelector('[data-open-linker]'); if(openBtn) openBtn.onclick=()=>openLinkWidget(item);
+            const detBtn =card.querySelector('[data-details]');   if(detBtn)  detBtn.onclick=()=>openDetail(item);
+            const colBtn =card.querySelector('[data-collapse]');  if(colBtn)  colBtn.onclick=(e)=>toggleCollapsed(id,e.currentTarget,card);
 
-            // Colori per-type (HSL) applicati via CSS variables
             try{
-              const tCol = typeColor(item.Type||'');
+              const tCol=typeColor(item.Type||'');
               card.style.setProperty('--type-color', tCol.solid);
               card.style.setProperty('--type-bg', tCol.bg);
               card.style.setProperty('--type-pill-bg', tCol.pillBg);
             }catch{}
 
-            // Replace body with paired value vs control if available
-            try{
-              const cval=String(item.ControlValue||'');
-              const cunit=String(item.ControlUnit||'');
-              const cmean=String(item.ControlMean||'');
-              const cstd=String(item.ControlStdDev||'');
-              const cn=String(item.ControlN||'');
-              const cnotes=String(item.ControlNotes||'');
-              card.innerHTML=`
-                <div class="card-body">
-                  <div class="pair-grid">
-                    <div class="pair-box">
-                      <div class="t">Valore</div>
-                      <div class="v"><b>${escapeHtml(val)} ${escapeHtml(unit)}</b></div>
-                      <div class="meta">N=${escapeHtml(n)} · mean=${escapeHtml(mean)} · sd=${escapeHtml(std)}</div>
-                    </div>
-                    <div class="pair-box">
-                      <div class="t">Controllo</div>
-                      <div class="v"><b>${escapeHtml(cval)} ${escapeHtml(cunit)}</b></div>
-                      <div class="meta">N=${escapeHtml(cn)} · mean=${escapeHtml(cmean)} · sd=${escapeHtml(cstd)}</div>
-                    </div>
-                  </div>
-                  ${cnotes?`<div class="meta" style="margin-top:6px"><b>Note controllo:</b> ${escapeHtml(cnotes)}</div>`:''}
-                  <div class="meta">DOI: ${escapeHtml(String(item.DOI||''))}</div>
-                  <div class="clamp-3">${escapeHtml(String(item.Notes||''))}</div>
-                  <div class="meta" style="margin-top:8px">${a}</div>
-                </div>`;
-            }catch{}
             grid.appendChild(card);
           });
 
@@ -527,7 +428,7 @@
         else{ if(collapsed.has(id)) collapsed.delete(id); else collapsed.add(id); }
         if(itemEl){
           itemEl.classList.toggle('collapsed', collapsed.has(id));
-          btn.textContent = itemEl.classList.contains('collapsed') ? 'Espandi' : 'Compatta';
+          if(btn) btn.textContent = itemEl.classList.contains('collapsed') ? 'Espandi' : 'Compatta';
         }else{
           renderNotes();
         }
@@ -544,97 +445,105 @@
         renderNotes();
       }
 
-      function renderData(){
-        const filtered=getFilteredData();
-        const groups=groupBy(filtered,x=>String(x.Variable||'Senza variabile'));
-        const container=document.getElementById('dataGroups'); container.innerHTML='';
-        Object.keys(groups).sort().forEach(variable=>{
-          const box=document.createElement('div'); box.className='group';
-          box.innerHTML=`<h3><span>${escapeHtml(variable)}</span> <span class="meta">${groups[variable].length}</span></h3>`;
-          const grid=document.createElement('div'); grid.className='items-grid';
-          groups[variable].forEach(item=>{
-            const link=String(item.Link||item.URL||''); const a=link?`<a href="${escapeAttr(link)}" target="_blank" rel="noopener">Apri</a>`:'';
-            const val=String(item.Value||''); const unit=String(item.Unit||''); const mean=String(item.Mean||''); const std=String(item.StdDev||''); const n=String(item.N||'');
-            const card=document.createElement('div'); card.className='note-card';
-            card.innerHTML=`
-              <div class="card-body">
-                <div><b>${escapeHtml(val)} ${escapeHtml(unit)}</b> <span class="meta">N=${escapeHtml(n)} · mean=${escapeHtml(mean)} · sd=${escapeHtml(std)}</span></div>
-                <div class="meta">DOI: ${escapeHtml(String(item.DOI||''))}</div>
-                <div class="clamp-3">${escapeHtml(String(item.Notes||''))}</div>
-                <div class="meta" style="margin-top:8px">${a}</div>
-              </div>`;
-            grid.appendChild(card);
-          });
-          box.appendChild(grid);
-          container.appendChild(box);
-        });
-      }
-
       function openDetail(item){
         if(!item) return;
-        document.getElementById('detTitle').textContent = String(item.Title||'(senza titolo)');
-        document.getElementById('detId').textContent    = String(item.ID||'');
-        document.getElementById('detDoi').textContent   = String(item.DOI||'');
-        document.getElementById('detType').textContent  = String(item.Type||'');
-        const pill = document.getElementById('detTypePill'); if(pill) pill.textContent = String(item.Type||'');
-        document.getElementById('detTags').textContent  = String(item.Tags||'');
-        document.getElementById('detNote').textContent  = String(item.Note||'');
-        document.getElementById('detText').textContent  = String(item.Text||'');
-        const link = String(item.Link||item.URL||'');
-        document.getElementById('detLink').innerHTML = link ? `<a href="${escapeAttr(link)}" target="_blank" rel="noopener">${escapeHtml(link)}</a>` : '';
-        const img = String(item.ImageLink||'');
-        const imgEl = document.getElementById('detImg');
+        el('detTitle').textContent = String(item.Title||'(senza titolo)');
+        el('detId').textContent    = String(item.ID||'');
+        el('detDoi').textContent   = String(item.DOI||'');
+        el('detType').textContent  = String(item.Type||'');
+        const pill=el('detTypePill'); if(pill) pill.textContent=String(item.Type||'');
+        el('detTags').textContent  = String(item.Tags||'');
+        el('detNote').textContent  = String(item.Note||'');
+        el('detText').textContent  = String(item.Text||'');
+        const link=String(item.Link||item.URL||'');
+        el('detLink').innerHTML = link ? `<a href="${escapeAttr(link)}" target="_blank" rel="noopener">${escapeHtml(link)}</a>` : '';
+        const img=String(item.ImageLink||''); const imgEl=el('detImg');
         if(img){ imgEl.src=img; imgEl.style.display='block'; imgEl.alt='Immagine '+String(item.ID||''); } else { imgEl.removeAttribute('src'); imgEl.style.display='none'; }
         try{
-          const col = typeColor(item.Type||'');
-          const sheet = document.querySelector('#detailOverlay .sheet');
-          if(sheet){
-            sheet.style.setProperty('--type-color', col.solid);
-            sheet.style.setProperty('--type-pill-bg', col.pillBg);
-          }
+          const col=typeColor(item.Type||''); const sheet=document.querySelector('#detailOverlay .sheet');
+          if(sheet){ sheet.style.setProperty('--type-color', col.solid); sheet.style.setProperty('--type-pill-bg', col.pillBg); }
         }catch{}
-        document.getElementById('detailOverlay').style.display='flex';
+        el('detailOverlay').style.display='flex';
       }
-      function closeDetail(){ document.getElementById('detailOverlay').style.display='none'; }
+      function closeDetail(){ const o=el('detailOverlay'); if(o) o.style.display='none'; }
 
-      function groupBy(arr,keyFn){ return arr.reduce((acc,x)=>{ const k=keyFn(x); (acc[k] ||= []).push(x); return acc; },{}); }
-
-      const NOTES_HEADERS=['CreatedAt','URL','Link','Title','DOI','Text','Tags','Type','ClientTimestamp','ID','LinkedIDs','Note','ImageLink','Animal'];
-      const DATA_HEADERS=['CreatedAt','DOI','URL','Link','Variable','Value','Unit','N','Mean','StdDev','ControlValue','ControlUnit','ControlN','ControlMean','ControlStdDev','ControlNotes','Notes','ClientTimestamp'];
-
-      function exportNotesCsv(){ const rows=getFilteredNotes(); const csv=toCsv(rows,NOTES_HEADERS); downloadCsv(csv,`notes_${timestamp()}.csv`); }
-      function exportDataCsv(){ const rows=getFilteredData(); const csv=toCsv(rows,DATA_HEADERS); downloadCsv(csv,`data_${timestamp()}.csv`); }
-
-      function toCsv(rows,headers){
-        const esc=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"';
-        const lines=[headers.map(h=>'"'+h+'"').join(',')];
-        for(const r of rows){ lines.push(headers.map(h=>esc(r[h])).join(',')); }
-        return lines.join('\r\n');
+      // Linker
+      let linkOrigin=null, linkSelection=new Set();
+      function openLinkWidget(item){
+        if(!item||!item.ID) return;
+        linkOrigin=item;
+        linkSelection=new Set(String(item.LinkedIDs||'').split(',').map(s=>s.trim()).filter(Boolean));
+        el('lwSourceId').textContent=String(item.ID);
+        el('lwSearch').value=''; renderLinkList();
+        el('linkOverlay').style.display='flex';
+        setTimeout(()=>el('lwSearch')?.focus(),0);
+        el('lwSearch').oninput=renderLinkList;
       }
-      function downloadCsv(text,filename){
-        const blob=new Blob([text],{type:'text/csv;charset=utf-8;'}); const url=URL.createObjectURL(blob);
-        const a=document.createElement('a'); a.href=url; a.download=filename; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+      function closeLinkWidget(){
+        el('linkOverlay').style.display='none';
+        el('lwList').innerHTML=''; el('lwSelected').innerHTML=''; el('lwCount').textContent='0';
+        linkOrigin=null; linkSelection.clear();
       }
-
-      function timestamp(){ const d=new Date(); const pad=n=>String(n).padStart(2,'0'); return `${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`; }
-      function escapeHtml(str){ return String(str).replace(/[&<>"']/g,s=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s])); }
-      function escapeAttr(str){ return escapeHtml(str).replace(/"/g,'&quot;'); }
-
-      // Color ramp per Type: hash -> hue, poi HSL
-      function hashHue(str){
-        const s=String(str||'').toLowerCase();
-        let h=0>>>0; // uint32
-        for(let i=0;i<s.length;i++){ h = (h*31 + s.charCodeAt(i)) >>> 0; }
-        return h % 360;
-      }
-      function typeColor(type){
-        const h=hashHue(type);
-        return {
-          hue: h,
-          solid: `hsl(${h}, 70%, 45%)`,
-          bg: `hsl(${h}, 85%, 96%)`,
-          pillBg: `hsl(${h}, 95%, 92%)`
+      function renderLinkList(){
+        const q=el('lwSearch').value.trim().toLowerCase();
+        const list=el('lwList'); list.innerHTML='';
+        state.notes.forEach(n=>{
+          const id=String(n.ID||''); if(!id) return; if(linkOrigin && id===String(linkOrigin.ID)) return;
+          const hay=[n.Title,n.Text,n.Tags,n.Note,n.ImageLink,n.Animal].map(x=>String(x||'').toLowerCase()).join(' ');
+          if(q && !hay.includes(q)) return;
+          const checked=linkSelection.has(id)?'checked':''; const animal=String(n.Animal||'').trim();
+          const tagsHtml=((animal?`<span class="tag animal-tag">🐾 ${escapeHtml(animal)}</span> `:'')+String(n.Tags||'').split(',').map(t=>t.trim()).filter(Boolean).map(t=>`<span class="tag">${escapeHtml(t)}</span>`).join(' ')).trim();
+          const img=String(n.ImageLink||''); const imgHtml=img?`<img class="thumb" src="${escapeAttr(img)}" alt="img ${escapeAttr(id)}">`:``;
+          const div=document.createElement('div'); div.className='lw-item';
+          div.innerHTML=`
+            <label style="display:grid;grid-template-columns:24px 96px 1fr;gap:10px;align-items:flex-start;">
+              <input class="lw-check" type="checkbox" value="${escapeAttr(id)}" ${checked} style="margin-top:6px;">
+              <div>${imgHtml}</div>
+              <div>
+                <div class="t clamp-2" style="font-weight:700">${escapeHtml(n.Title||'(senza titolo)')}</div>
+                <div class="muted clamp-2">${escapeHtml(n.Text||'')}</div>
+                ${n.Note?`<div class="muted"><b>Nota:</b> ${escapeHtml(n.Note)}</div>`:''}
+                ${tagsHtml?`<div class="tags" style="margin-top:6px;">${tagsHtml}</div>`:''}
+                <div class="muted" style="margin-top:6px;">ID: <code>${escapeHtml(id)}</code></div>
+              </div>
+            </label>`;
+          list.appendChild(div);
+        });
+        list.onchange=(e)=>{
+          const t=e.target;
+          if(t && t.classList.contains('lw-check')){
+            const id=String(t.value);
+            if(t.checked) linkSelection.add(id); else linkSelection.delete(id);
+            updateSelectedPreview();
+          }
         };
+        updateSelectedPreview();
+      }
+      function updateSelectedPreview(){
+        const sel=Array.from(linkSelection);
+        el('lwCount').textContent=String(sel.length);
+        el('lwSelected').innerHTML=sel.map(id=>`<span class="pill">ID ${escapeHtml(id)}</span>`).join(' ');
+      }
+      async function confirmLink(){
+        if(!linkOrigin||!linkOrigin.ID){ closeLinkWidget(); return; }
+        const checked=Array.from(linkSelection);
+        showToast('Invio dei link al server…','info',2000);
+        try{
+          const url=new URL(DEFAULT_APPS_URL);
+          url.searchParams.set('mode','updateLinks');
+          url.searchParams.set('id',String(linkOrigin.ID));
+          url.searchParams.set('linkedIds',checked.join(','));
+          const res=await jsonp(url.toString());
+          if(!res||res.ok!==true){ showToast('Errore: risposta non valida dal server','err',5000); return; }
+          await loadAll(); closeLinkWidget(); showToast('Link salvati sul server','ok',3500);
+        }catch(err){ console.error('confirmLink error',err); showToast('Errore di rete durante il salvataggio','err',5000); }
+      }
+
+      // Export e utility
+      const NOTES_HEADERS=['CreatedAt','URL','Link','Title','DOI','Text','Tags','Type','ClientTimestamp','ID','LinkedIDs','Note','ImageLink','Animal'];
+      function exportNotesCsv(){
+        const rows=getFilteredNotes(); const csv=toCsv(rows,NOTES_HEADERS);
+        downloadCsv(csv,`notes_${timestamp()}.csv`);
       }
 
       function jsonp(baseUrl){
@@ -654,76 +563,33 @@
 
       function showToast(message,kind='info',timeout=3000){
         try{
-          const c=document.getElementById('toastContainer'); if(!c) return alert(message);
-          const el=document.createElement('div'); el.className='toast '+(kind||'info'); el.textContent=String(message);
-          c.appendChild(el); const t=setTimeout(()=>{ try{ el.remove(); }catch{} }, timeout||3000);
-          el.addEventListener('click',()=>{ clearTimeout(t); try{ el.remove(); }catch{} });
+          const c=el('toastContainer'); if(!c) return alert(message);
+          const elx=document.createElement('div'); elx.className='toast '+(kind||'info'); elx.textContent=String(message);
+          c.appendChild(elx); const t=setTimeout(()=>{ try{ elx.remove(); }catch{} }, timeout||3000);
+          elx.addEventListener('click',()=>{ clearTimeout(t); try{ elx.remove(); }catch{} });
         }catch(e){ console.warn('toast error',e); }
       }
 
-      let linkOrigin=null, linkSelection=new Set();
+      function groupBy(arr,keyFn){ return arr.reduce((acc,x)=>{ const k=keyFn(x); (acc[k] ||= []).push(x); return acc; },{}); }
+      function toCsv(rows,headers){
+        const esc=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"';
+        const lines=[headers.map(h=>'"'+h+'"').join(',')];
+        for(const r of rows){ lines.push(headers.map(h=>esc(r[h])).join(',')); }
+        return lines.join('\r\n');
+      }
+      function downloadCsv(text,filename){
+        const blob=new Blob([text],{type:'text/csv;charset=utf-8;'}); const url=URL.createObjectURL(blob);
+        const a=document.createElement('a'); a.href=url; a.download=filename; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+      }
+      function timestamp(){ const d=new Date(); const p=n=>String(n).padStart(2,'0'); return `${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}`; }
+      function escapeHtml(str){ return String(str).replace(/[&<>"']/g,s=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s])); }
+      function escapeAttr(str){ return escapeHtml(str).replace(/"/g,'&quot;'); }
+      function el(id){ return document.getElementById(id); }
 
-      function openLinkWidget(item){
-        if(!item||!item.ID) return;
-        linkOrigin=item;
-        linkSelection=new Set(String(item.LinkedIDs||'').split(',').map(s=>s.trim()).filter(Boolean));
-        document.getElementById('lwSourceId').textContent=String(item.ID);
-        document.getElementById('lwSearch').value=''; renderLinkList();
-        document.getElementById('linkOverlay').style.display='flex';
-        setTimeout(()=>document.getElementById('lwSearch').focus(),0);
-        document.getElementById('lwSearch').oninput=renderLinkList;
-      }
-      function closeLinkWidget(){
-        document.getElementById('linkOverlay').style.display='none';
-        document.getElementById('lwList').innerHTML=''; document.getElementById('lwSelected').innerHTML=''; document.getElementById('lwCount').textContent='0';
-        linkOrigin=null; linkSelection.clear();
-      }
-      function renderLinkList(){
-        const q=document.getElementById('lwSearch').value.trim().toLowerCase();
-        const list=document.getElementById('lwList'); list.innerHTML='';
-        state.notes.forEach(n=>{
-          const id=String(n.ID||''); if(!id) return; if(linkOrigin && id===String(linkOrigin.ID)) return;
-          const hay=[n.Title,n.Text,n.Tags,n.Note,n.ImageLink,n.Animal].map(x=>String(x||'').toLowerCase()).join(' ');
-          if(q && !hay.includes(q)) return;
-          const checked=linkSelection.has(id)?'checked':'';
-          const animal=String(n.Animal||'').trim();
-          const tagsHtml=((animal?`<span class=\"tag animal-tag\">🐾 ${escapeHtml(animal)}</span> `:'')+String(n.Tags||'').split(',').map(t=>t.trim()).filter(Boolean).map(t=>`<span class=\"tag\">${escapeHtml(t)}</span>`).join(' ')).trim();
-          const img=String(n.ImageLink||''); const imgHtml=img?`<img class="thumb" src="${escapeAttr(img)}" alt="img ${escapeAttr(id)}">`:``;
-          const div=document.createElement('div'); div.className='lw-item';
-          div.innerHTML=`
-            <label style="display:grid;grid-template-columns:24px 96px 1fr;gap:10px;align-items:flex-start;">
-              <input class="lw-check" type="checkbox" value="${escapeAttr(id)}" ${checked} style="margin-top:6px;">
-              <div>${imgHtml}</div>
-              <div>
-                <div class="t clamp-2" style="font-weight:700">${escapeHtml(n.Title||'(senza titolo)')}</div>
-                <div class="muted clamp-2">${escapeHtml(n.Text||'')}</div>
-                ${n.Note?`<div class="muted"><b>Nota:</b> ${escapeHtml(n.Note)}</div>`:''}
-                ${tagsHtml?`<div class="tags" style="margin-top:6px;">${tagsHtml}</div>`:''}
-                <div class="muted" style="margin-top:6px;">ID: <code>${escapeHtml(id)}</code></div>
-              </div>
-            </label>`;
-          list.appendChild(div);
-        });
-        list.onchange=(e)=>{
-          const t=e.target; if(t && t.classList.contains('lw-check')){ const id=String(t.value); if(t.checked) linkSelection.add(id); else linkSelection.delete(id); updateSelectedPreview(); }
-        };
-        updateSelectedPreview();
-      }
-      function updateSelectedPreview(){
-        const sel=Array.from(linkSelection);
-        document.getElementById('lwCount').textContent=String(sel.length);
-        document.getElementById('lwSelected').innerHTML=sel.map(id=>`<span class="pill">ID ${escapeHtml(id)}</span>`).join(' ');
-      }
-      async function confirmLink(){
-        if(!linkOrigin||!linkOrigin.ID){ closeLinkWidget(); return; }
-        const checked=Array.from(linkSelection);
-        showToast('Invio dei link al server…','info',2000);
-        try{
-          const url=new URL(DEFAULT_APPS_URL); url.searchParams.set('mode','updateLinks'); url.searchParams.set('id',String(linkOrigin.ID)); url.searchParams.set('linkedIds',checked.join(','));
-          const res=await jsonp(url.toString());
-          if(!res||res.ok!==true){ showToast('Errore: risposta non valida dal server','err',5000); return; }
-          await loadAll(); closeLinkWidget(); showToast('Link salvati sul server','ok',3500);
-        }catch(err){ console.error('confirmLink error',err); showToast('Errore di rete durante il salvataggio','err',5000); }
+      function hashHue(str){ const s=String(str||'').toLowerCase(); let h=0>>>0; for(let i=0;i<s.length;i++){ h=(h*31 + s.charCodeAt(i))>>>0; } return h%360; }
+      function typeColor(type){
+        const h=hashHue(type);
+        return { hue:h, solid:`hsl(${h}, 70%, 45%)`, bg:`hsl(${h}, 85%, 96%)`, pillBg:`hsl(${h}, 95%, 92%)` };
       }
 
       async function generateIds(){
