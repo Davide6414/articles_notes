@@ -351,6 +351,35 @@
       function escapeAttr(str) {
         return escapeHtml(str).replace(/"/g, '&quot;');
       }
+      // Genera ID per le note senza ID
+      async function generateIds() {
+        try {
+          if (!confirm('Assegnare un ID alle note senza ID?')) return;
+          // Prova POST (CORS permesso), poi fallback JSONP (GET)
+          let assigned = null;
+          try {
+            const res = await fetch(DEFAULT_APPS_URL, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json; charset=UTF-8' },
+              body: JSON.stringify({ mode: 'assignIds' })
+            });
+            const txt = await res.text();
+            const m = txt && txt.match(/OK:?\s*(\d+)/i);
+            if (m) assigned = parseInt(m[1], 10);
+          } catch (_) {}
+          if (assigned == null || Number.isNaN(assigned)) {
+            const url = new URL(DEFAULT_APPS_URL);
+            url.searchParams.set('mode', 'assignIds');
+            const data = await jsonp(url.toString());
+            if (data && typeof data.assigned === 'number') assigned = data.assigned;
+          }
+          alert(typeof assigned === 'number' ? `Assegnati ${assigned} ID` : 'Assegnazione ID completata');
+          await loadAll();
+        } catch (e) {
+          console.error('Errore generateIds', e);
+          alert('Errore durante la generazione degli ID');
+        }
+      }
       // JSONP helper for CORS-restricted contexts
       function jsonp(baseUrl) {
         return new Promise((resolve, reject) => {
